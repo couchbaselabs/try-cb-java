@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Couchbase Travel || 2015</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Bootstrap CSS and bootstrap datepicker CSS used for styling the demo pages-->
+    <link rel="stylesheet" href="css/datepicker.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap-switch.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-datepicker.js"></script>
+    <script src="js/bootstrap-switch.min.js"></script>
+    <script src="js/angular.min.js"></script>
+    <script src="js/ui-bootstrap.min.js"></script>
+    <script src="js/ui-bootstrap-tpls.min.js"></script>
+    <script src="js/scripts.js"></script>
+</head>
+<body ng-app="testApp" ng-controller="flightController">
+<script type="text/ng-template" id="provisionModal.html">
+    <div class="modal-header">
+        <h3 class="modal-title">Provision The clus</h3>
+    </div>
+    <div class="modal-body">
+        <ul>
+            <li ng-repeat="item in items">
+                <a ng-click="selected.item = item">{{ item }}</a>
+            </li>
+        </ul>
+        Selected: <b>{{ selected.item }}</b>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="ok()">OK</button>
+        <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+    </div>
+</script>
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Find a Flight</h3>
+                </div>
+                <div class="panel-body">
+                    <div
+                            class="col-sm-2"><img src="images/slouchlogocolor.png" height="75" width="69"
+                                                  style="border:1px solid #337ab7;"></div>
+                    <div class="col-sm-10">
+                    <form class="form-horizontal" role="form" name="travelForm" ng-submit="findFlights()" novalidate>
+                        <div class="form-group" ng-class="{ 'has-error' : travelForm.from.$invalid && !travelForm.from.$pristine && travelForm.to.$invalid && !travelForm.to.$pristine }">
+                            <label class="col-sm-3 control-label">Airport or City</label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    <span class="input-group-addon">From</span>
+                                    <input type="text"placeholder="find airport"
+                                           typeahead="data.airportname for data in findAirports($viewValue)"
+                                           typeahead-min-length="3"
+                                           typeahead-wait-ms="250"
+                                           ng-model="fromName"
+                                           ng-minlength="3"
+                                           class="input-small form-control"
+                                           name="from" required/>
+                                    <span class="input-group-addon ">To</span>
+                                    <input type="text"
+                                           placeholder="find airport"
+                                           typeahead="data.airportname for data in findAirports($viewValue)"
+                                           typeahead-min-length="3"
+                                           typeahead-wait-ms="250"
+                                           ng-model="toName"
+                                           ng-minlength="3"
+                                           class="input-small form-control"
+                                           name="to" required/>
+                                </div>
+                            </div>
+                        </div>
+                        <p ng-show="travelForm.from.$invalid && !travelForm.from.$pristine"
+                           class="help-block">Please enter at least 3 letters for the <em>source</em> airport.
+                        </p>
+                        <p ng-show="travelForm.to.$invalid && !travelForm.to.$pristine"
+                           class="help-block">Please enter at least 3 letters for the <em>destination</em>
+                            airport.
+                        </p>
+                        <div class="form-group" ng-class="{ 'has-error' : travelForm.start.$invalid && !travelForm.start.$pristine}">
+                            <label class="col-sm-3 control-label">Travel Dates</label>
+
+                            <div class="col-sm-9">
+                                <div class="input-daterange" id="datepicker">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Leave</span>
+                                        <input type="text" class="input-small form-control" name="start"
+                                               ng-model="leave" placeholder="enter a travel date" required/>
+                                        <span class="input-group-addon" id="retSpan">Return</span>
+                                        <input type="text" class="input-small form-control" id="retDate" name="end"
+                                               ng-model="ret"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <label id="retLabel">Round Trip</label>
+                            </div>
+                            <div class="col-xs-2">
+                                <div class="input-group">
+                                    <input type="checkbox" class="switch" checked/>
+                                </div>
+                            </div>
+                            <div class="col-xs-2">
+                                <label>Travelers</label>
+                            </div>
+                            <div class="col-xs-1">
+                                <select class="sel-width">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+                            <div class="col-xs-5">
+                                <button class="btn btn-primary pull-right btn-sm" type="submit" ng-disabled="travelForm.$invalid">Find
+                                    Flights</button>
+                            </div>
+                        </div>
+                    </form>
+                        </div>
+                </div>
+                <div class="panel-footer panel-primary"><small> © 2015 Couchbase.com  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Powered
+                        by:&nbsp;&nbsp;&nbsp;</small> <img src="/images/logoCouchbase.png"/>&nbsp;&nbsp;&nbsp;&nbsp;<img
+                                src="/images/logoNode.png"/>&nbsp;&nbsp;&nbsp;&nbsp;<img
+                                src="/images/logoExpress.png"/>&nbsp;&nbsp;&nbsp;
+                        &nbsp;<img src="/images/angular.png"/>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4"></div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="panel panel-primary" ng-show="!empty">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Available Flights</h3>
+                </div>
+                <div class="panel-body">
+                    <h4>Outbound Leg</h4>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Airline</th>
+                            <th>Flight</th>
+                            <th>Departure</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Aircraft</th>
+                            <th>Reservation</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="row in rowCollectionLeave">
+                            <td>{{row.name}}</td>
+                            <td>{{row.flight}}</td>
+                            <td>{{row.utc}}</td>
+                            <td>{{row.sourceairport | uppercase}}</td>
+                            <td>{{row.destinationairport | uppercase}}</td>
+                            <td>{{row.equipment}}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" ng-click="selectRow(row)" type="button">Choose</button>
+                            </td>
+                            <td>
+                                <button type="button" ng-click="removeRow(row)" class="btn btn-sm btn-danger">
+                                    <i class="glyphicon glyphicon-remove-circle">
+                                    </i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div ng-show="!retEmpty">
+                    <h4>Return Leg</h4>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Airline</th>
+                            <th>Flight</th>
+                            <th>Departure</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Aircraft</th>
+                            <th>Reservation</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="rowRet in rowCollectionRet">
+                            <td>{{rowRet.name}}</td>
+                            <td>{{rowRet.flight}}</td>
+                            <td>{{rowRet.utc}}</td>
+                            <td>{{rowRet.sourceairport | uppercase}}</td>
+                            <td>{{rowRet.destinationairport | uppercase}}</td>
+                            <td>{{rowRet.equipment}}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" ng-click="selectRowRet(rowRet)" type="button">Choose
+                                </button>
+                            </td>
+                            <td>
+                                <button type="button" ng-click="removeRowRet(rowRet)" class="btn btn-sm btn-danger">
+                                    <i class="glyphicon glyphicon-remove-circle">
+                                    </i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
