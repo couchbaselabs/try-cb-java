@@ -49,9 +49,14 @@ public class AirportController {
         System.err.println("QUERY: " + q);
 
         List<Map> content = new ArrayList<Map>();
-        for (QueryRow row : result) {
-            content.add(row.value().toMap());
+        if (result.finalSuccess()) {
+            for (QueryRow row : result) {
+                content.add(row.value().toMap());
+            }
+        } else {
+            System.err.println(result.errors());
         }
+
         return content;
     }
 }
