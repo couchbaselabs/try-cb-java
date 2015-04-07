@@ -8,6 +8,8 @@ return flight) based on airports and dates. Airport selection is done dynamicall
 bound to N1QL queries on the server side. Date selection uses date time pickers and then searches for applicable air 
 flight routes from a previously populated database.
 
+![Application](app.png)
+
 ## Prerequisites
 The following pieces need to be in place in order to run the application.
 
