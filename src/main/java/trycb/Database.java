@@ -29,6 +29,7 @@ import com.couchbase.client.java.query.Statement;
 import com.couchbase.client.java.query.dsl.path.AsPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataRetrievalFailureException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -45,31 +46,21 @@ public class Database {
 
     private Database() {}
 
-    public static List<Map<String, Object>> findAllAirports(final Bucket bucket, final String query) {
-        Statement q;
+    public static List<Map<String, Object>> findAllAirports(final Bucket bucket, final String params) {
+        Statement query;
 
         AsPath prefix = select("airportname").from(i(bucket.name()));
-        if (query.length() == 3) {
-            q = prefix.where(x("faa").eq(s(query.toUpperCase())));
-        } else if (query.length() == 4 && (query.equals(query.toUpperCase())||query.equals(query.toLowerCase()))) {
-            q = prefix.where(x("icao").eq(s(query.toUpperCase())));
+        if (params.length() == 3) {
+            query = prefix.where(x("faa").eq(s(params.toUpperCase())));
+        } else if (params.length() == 4 && (params.equals(params.toUpperCase()) || params.equals(params.toLowerCase()))) {
+            query = prefix.where(x("icao").eq(s(params.toUpperCase())));
         } else {
-            q = prefix.where(i("airportname").like(s(query + "%")));
+            query = prefix.where(i("airportname").like(s(params + "%")));
         }
 
-        logQuery(q.toString());
-        QueryResult result = bucket.query(Query.simple(q));
-
-        List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        if (result.finalSuccess()) {
-            for (QueryRow row : result) {
-                content.add(row.value().toMap());
-            }
-        } else {
-            System.err.println(result.errors());
-        }
-
-        return content;
+        logQuery(query.toString());
+        QueryResult result = bucket.query(Query.simple(query));
+        return extractResultOrThrow(result);
     }
 
     public static List<Map<String, Object>> findAllFlightPaths(final Bucket bucket, String from, String to, Calendar leave) {
@@ -80,36 +71,42 @@ public class Database {
         logQuery(query.toString());
         QueryResult result = bucket.query(Query.simple(query));
 
+        if (!result.finalSuccess()) {
+            LOGGER.warn("Query returned with errors: " + result.errors());
+            throw new DataRetrievalFailureException("Query error: " + result.errors());
+        }
+
         String fromAirport = null;
         String toAirport = null;
         for (QueryRow row : result) {
-            if (fromAirport == null) {
+            if (row.value().containsKey("fromAirport")) {
                 fromAirport = row.value().getString("fromAirport");
             }
-            if (toAirport == null) {
+            if (row.value().containsKey("toAirport")) {
                 toAirport = row.value().getString("toAirport");
             }
         }
 
-
-
-        String otherQuery = "SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment FROM `"
+        String joinQuery = "SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment FROM `"
             + bucket.name() + "` r UNNEST r.schedule s JOIN `" + bucket.name() + "` a ON KEYS r.airlineid WHERE r.sourceairport='"
-            + fromAirport + "' AND r.destinationairport='" + toAirport + "' AND s.day=" + leave.get(Calendar.DAY_OF_MONTH) + " ORDER BY a.name";
+            + fromAirport + "' AND r.destinationairport='" + toAirport + "' AND s.day="
+            + leave.get(Calendar.DAY_OF_MONTH) + " ORDER BY a.name";
 
+        logQuery(joinQuery);
+        QueryResult otherResult = bucket.query(Query.simple(joinQuery));
+        return extractResultOrThrow(otherResult);
+    }
 
-        logQuery(otherQuery);
-        QueryResult otherResult = bucket.query(Query.simple(otherQuery));
-
-        List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        if (otherResult.finalSuccess()) {
-            for (QueryRow row : otherResult) {
-                content.add(row.value().toMap());
-            }
-        } else {
-            System.err.println(result.errors());
+    private static List<Map<String, Object>> extractResultOrThrow(QueryResult result) {
+        if (!result.finalSuccess()) {
+            LOGGER.warn("Query returned with errors: " + result.errors());
+            throw new DataRetrievalFailureException("Query error: " + result.errors());
         }
 
+        List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
+        for (QueryRow row : result) {
+            content.add(row.value().toMap());
+        }
         return content;
     }
 
