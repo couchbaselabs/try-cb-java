@@ -68,6 +68,9 @@ $ mvn spring-boot:run
 2015-04-07 13:28:21.854  INFO 64284 --- [lication.main()] trycb.Application                        : Started Application in 3.943 seconds (JVM running for 8.494)
 ```
 
+Note that when you run the application for the first time, it will make sure that all indexes are created for best
+performance, so it might take a bit longer. You can follow the output on the command line.
+
 You should then be able to browse the UI, search for US airports and get flight route information. If you are unsure for
 what to search for, try from `SFO` to `LAX` and just use the 1st until the 5th of the current month. While doing so, you
 can check the command line which prints all the executed N1QL queries:

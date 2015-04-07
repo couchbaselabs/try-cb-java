@@ -54,13 +54,13 @@ public class Application implements Filter {
     // Config Options
     // ======
 
-    @Value("${cb.hostname}")
+    @Value("${hostname}")
     private String hostname;
 
-    @Value("${cb.bucket}")
+    @Value("${bucket}")
     private String bucket;
 
-    @Value("${cb.password}")
+    @Value("${password}")
     private String password;
 
     // ======
