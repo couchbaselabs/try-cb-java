@@ -85,3 +85,11 @@ can check the command line which prints all the executed N1QL queries:
 2015-04-07 13:30:29.222  INFO 64284 --- [io-8080-exec-10] trycb.Database: Executing Query: SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment FROM `travel-sample` r UNNEST r.schedule s JOIN `travel-sample` a ON KEYS r.airlineid WHERE r.sourceairport='LAX' AND r.destinationairport='SFO' AND s.day=5 ORDER BY a.name
 2015-04-07 13:30:29.289  INFO 64284 --- [nio-8080-exec-9] trycb.Database: Executing Query: SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment FROM `travel-sample` r UNNEST r.schedule s JOIN `travel-sample` a ON KEYS r.airlineid WHERE r.sourceairport='SFO' AND r.destinationairport='LAX' AND s.day=1 ORDER BY a.name
 ```
+
+## Custom Options
+By default it will connect to the `travel-sample` bucket on `127.0.0.1`. You can conveniently change those options through
+the command line on bootstrap:
+
+```
+$ mvn spring-boot:run -Dhostname=127.0.0.1 -Dbucket=travel-sample -Dpassword=
+```
