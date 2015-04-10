@@ -58,7 +58,7 @@ public class StartupPreparations implements InitializingBean {
     /**
      * Helper method to ensure all indexes are created for this application to run properly.
      */
-    private void ensureIndexes() {
+    private void ensureIndexes() throws Exception {
         LOGGER.info("Ensuring all Indexes are created.");
 
         QueryResult indexResult = bucket.query(
@@ -84,7 +84,7 @@ public class StartupPreparations implements InitializingBean {
         indexesToCreate.removeAll(foundIndexes);
 
         if (!hasPrimary) {
-            String query = "CREATE PRIMARY INDEX ON `" + bucket.name() + "`";
+            String query = "CREATE PRIMARY INDEX def_primary ON `" + bucket.name() + "` USING gsi WITH {\"defer_build\":true}";
             LOGGER.info("Executing index query: {}", query);
             QueryResult result = bucket.query(Query.simple(query));
             if (result.finalSuccess()) {
@@ -95,7 +95,8 @@ public class StartupPreparations implements InitializingBean {
         }
 
         for (String name : indexesToCreate) {
-            String query = "CREATE INDEX " + name + " ON `" + bucket.name() + "` (" + name.replace("def_", "") + ");";
+            String query = "CREATE INDEX " + name + " ON `" + bucket.name() + "` (" + name.replace("def_", "") + ") "
+                + "USING gsi WITH {\"defer_build\":true}\"";
             LOGGER.info("Executing index query: {}", query);
             QueryResult result = bucket.query(Query.simple(query));
             if (result.finalSuccess()) {
@@ -103,6 +104,34 @@ public class StartupPreparations implements InitializingBean {
             } else {
                 LOGGER.warn("Could not create index {}: {}", name, result.errors());
             }
+        }
+
+        LOGGER.info("Waiting 5 seconds before building the indexes.");
+
+        Thread.sleep(5000);
+
+        StringBuilder indexes = new StringBuilder();
+        boolean first = true;
+        for (String name : indexesToCreate) {
+            if (first) {
+                first = false;
+            } else {
+                indexes.append(",");
+            }
+            indexes.append(name);
+        }
+
+        if (!hasPrimary) {
+            indexes.append(",").append("def_primary");
+        }
+
+        String query = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ") USING GSI";
+        LOGGER.info("Executing index query: {}", query);
+        QueryResult result = bucket.query(Query.simple(query));
+        if (result.finalSuccess()) {
+            LOGGER.info("Successfully executed build index query.");
+        } else {
+            LOGGER.warn("Could not execute build index query {}.", result.errors());
         }
     }
 
