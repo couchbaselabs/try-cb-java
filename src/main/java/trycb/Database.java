@@ -27,9 +27,16 @@ import com.couchbase.client.java.query.QueryResult;
 import com.couchbase.client.java.query.QueryRow;
 import com.couchbase.client.java.query.Statement;
 import com.couchbase.client.java.query.dsl.path.AsPath;
+import com.couchbase.client.java.document.JsonDocument;
+import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.document.json.JsonArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.codec.Base64;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -95,6 +102,70 @@ public class Database {
         logQuery(joinQuery);
         QueryResult otherResult = bucket.query(Query.simple(joinQuery));
         return extractResultOrThrow(otherResult);
+    }
+
+    public static ResponseEntity<String> login(final Bucket bucket, final String username, final String password) {
+        JsonDocument doc = bucket.get("user::" + username);
+        if(BCrypt.checkpw(password, doc.content().getString("password"))) {
+            JsonObject response = JsonObject.create()
+                .put("success", "sometokenhere")
+                .put("data", doc.content());
+            return new ResponseEntity<String>(response.toString(), HttpStatus.OK);
+        }
+        return new ResponseEntity<String>("{failure: 'Bad Username or Password'}", HttpStatus.OK);
+    }
+
+    public static ResponseEntity<String> createLogin(final Bucket bucket, final String username, final String password) {
+        JsonObject data = JsonObject.empty()
+            .put("_type", "User")
+            .put("_id", "")
+            .put("token", Base64.encode(("{user: " + username + "}").getBytes()).toString())
+            .put("name", username)
+            .put("password", BCrypt.hashpw(password, BCrypt.gensalt()));
+        JsonDocument doc = JsonDocument.create("user::" + username, data);
+        JsonDocument response = bucket.insert(doc);
+        if(response != null) {
+            JsonObject responseData = JsonObject.create()
+                .put("success", "sometokenhere")
+                .put("data", data);
+            return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
+        }
+        return new ResponseEntity<String>("{failure: 'There was an error creating account'}", HttpStatus.OK);
+    }
+
+    public static ResponseEntity<String> flights(final Bucket bucket, final String token, final String newFlights) {
+        JsonDocument userData = bucket.get("user::" + token);
+        if(userData != null) {
+            JsonArray allBookedFlights = userData.content().getArray("flights");
+            if(allBookedFlights == null) {
+                allBookedFlights = JsonArray.create();
+            }
+            JsonArray newFlightsJson = JsonArray.fromJson(newFlights);
+            JsonObject curFlightJsonObject = null;
+            for(Object temp : newFlightsJson.toList()) {
+                Map<String, Object> t = (Map<String, Object>) ((Map<String, Object>) temp).get("_data");
+                JsonObject flightJson = JsonObject.empty()
+                    .put("name", t.get("name"))
+                    .put("flight", t.get("flight"))
+                    .put("date", t.get("date"))
+                    .put("sourceairport", t.get("sourceairport"))
+                    .put("destinationairport", t.get("destinationairport"))
+                    .put("bookedon", "");
+                allBookedFlights.add(flightJson);
+            }
+            userData.content().put("flights", allBookedFlights);
+            JsonDocument response = bucket.upsert(userData);
+            return new ResponseEntity<String>(response.content().toString(), HttpStatus.OK);
+        }
+        return null;
+    }
+
+    public static ResponseEntity<String> getFlights(final Bucket bucket, final String token) {
+        JsonDocument doc = bucket.get("user::" + token);
+        if(doc != null) {
+            return new ResponseEntity<String>(doc.content().getArray("flights").toString(), HttpStatus.OK);
+        }
+        return new ResponseEntity<String>("{failure: 'No flights found'}", HttpStatus.OK);
     }
 
     private static List<Map<String, Object>> extractResultOrThrow(QueryResult result) {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <title>Couchbase Travel || 2015</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -15,36 +15,28 @@
     <script src="js/angular.min.js"></script>
     <script src="js/ui-bootstrap.min.js"></script>
     <script src="js/ui-bootstrap-tpls.min.js"></script>
+    <script src="js/ngCart.js"></script>
+    <script src="js/angular-md5.min.js"></script>
+    <script src="js/angular-cookies.min.js"></script>
+    <script src="js/angular-jwt.min.js"></script>
     <script src="js/scripts.js"></script>
 </head>
 <body ng-app="testApp" ng-controller="flightController">
-<script type="text/ng-template" id="provisionModal.html">
-    <div class="modal-header">
-        <h3 class="modal-title">Provision The clus</h3>
-    </div>
-    <div class="modal-body">
-        <ul>
-            <li ng-repeat="item in items">
-                <a ng-click="selected.item = item">{{ item }}</a>
-            </li>
-        </ul>
-        Selected: <b>{{ selected.item }}</b>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" ng-click="ok()">OK</button>
-        <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
-    </div>
-</script>
 <div class="container">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="panel panel-primary">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Find a Flight</h3>
+                    <div class="container-fluid panel-container">
+                        <div class="col-xs-6 text-left">
+                            <h3 class="panel-title">CBTravel - Find a Flight </h3>
+                            <small><strong>User: </strong> {{getUser()}}</small>
+                        </div>
+                        <ngcart-summary></ngcart-summary>
+                    </div>
                 </div>
                 <div class="panel-body">
-                    <div
-                            class="col-sm-2"><img src="images/slouchlogocolor.png" height="75" width="69"
+                    <div class="col-sm-2"><img src="images/slouchlogocolor.png" height="75" width="69"
                                                   style="border:1px solid #337ab7;"></div>
                     <div class="col-sm-10">
                     <form class="form-horizontal" role="form" name="travelForm" ng-submit="findFlights()" novalidate>
@@ -142,13 +134,13 @@
         <div class="col-md-4"></div>
     </div>
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <div class="panel panel-primary" ng-show="!empty">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Available Flights</h3>
+                    <h3 class="panel-title">Available Flights </h3>
                 </div>
                 <div class="panel-body">
-                    <h4>Outbound Leg</h4>
+                    <h4>Outbound Leg {{this.leave}}</h4>
                     <table class="table table-striped">
                         <thead>
                         <tr>
@@ -182,7 +174,7 @@
                         </tbody>
                     </table>
                     <div ng-show="!retEmpty">
-                    <h4>Return Leg</h4>
+                    <h4>Return Leg {{this.ret}}</h4>
                     <table class="table table-striped">
                         <thead>
                         <tr>
