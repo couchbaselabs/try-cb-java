@@ -112,7 +112,9 @@ public class Database {
                 .put("data", doc.content());
             return new ResponseEntity<String>(response.toString(), HttpStatus.OK);
         }
-        return new ResponseEntity<String>("{failure: 'Bad Username or Password'}", HttpStatus.OK);
+        JsonObject responseData = JsonObject.empty()
+            .put("failure", "Bad Username or Password");
+        return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
     }
 
     public static ResponseEntity<String> createLogin(final Bucket bucket, final String username, final String password) {
@@ -123,14 +125,17 @@ public class Database {
             .put("name", username)
             .put("password", BCrypt.hashpw(password, BCrypt.gensalt()));
         JsonDocument doc = JsonDocument.create("user::" + username, data);
-        JsonDocument response = bucket.insert(doc);
-        if(response != null) {
+        try {
+            JsonDocument response = bucket.insert(doc);
             JsonObject responseData = JsonObject.create()
                 .put("success", "sometokenhere")
                 .put("data", data);
             return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
+        } catch (Exception e) {
+            JsonObject responseData = JsonObject.empty()
+                .put("failure", "There was an error createing account");
+            return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
         }
-        return new ResponseEntity<String>("{failure: 'There was an error creating account'}", HttpStatus.OK);
     }
 
     public static ResponseEntity<String> flights(final Bucket bucket, final String token, final String newFlights) {

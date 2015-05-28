@@ -397,7 +397,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
         };
     }])
 
-    .directive('ngcartSummary', ['$location',function(location){
+    .directive('ngcartSummary', ['$location','$window','$cookieStore',function(location,window,$cookieStore){
         return {
             restrict : 'AEC',
             controller : 'CartController',
@@ -418,6 +418,14 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
                 },
                     scope.logout=function(){
 
+                    },
+                    scope.getUser=function(){
+                        if($cookieStore.get('user')===undefined){
+                            scope.ngCart.empty();
+                            window.location.href="http://" + window.location.host + "/login.html";
+                            return;
+                        }
+                        return $cookieStore.get('user');
                     }
             }
         };

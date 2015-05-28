@@ -26,13 +26,18 @@
       <script src="js/scripts.js"></script>
     <style>
        body {padding-top: 40px;padding-bottom: 40px;background-color: #eee;}
-       .form-signin {max-width: 330px;padding: 15px;margin: 0 auto;}
+       .form-signin {max-width: 330px;padding: 5px;margin: 0 auto;}
     </style>
   </head>
   <body ng-app="testApp" ng-controller="flightController">
     <div class="container">
       <form role="form" ng-submit="login()" class="form-signin" name="loginForm" novalidate>
-        <h2 class="form-signin-heading">{{formData.h2}}</h2>
+          <div class="row">
+              <div class="col-xs-12">
+                  <img src="images/CBTravel.LOGO.png">
+              </div>
+          </div>
+        <h3 class="form-signin-heading">{{formData.h2}}</h3>
           <div class="alert alert-warning" role="alert" ng-show="formData.error">{{formData.error}}</div>
         <input type="text" placeholder="Please Enter Your Email Address" required name="username"
                ng-model="formData.username"
