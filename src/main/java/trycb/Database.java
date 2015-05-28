@@ -133,7 +133,8 @@ public class Database {
             return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
         } catch (Exception e) {
             JsonObject responseData = JsonObject.empty()
-                .put("failure", "There was an error createing account");
+                .put("failure", "There was an error createing account")
+                .put("exception", e.getMessage());
             return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
         }
     }
@@ -160,7 +161,9 @@ public class Database {
             }
             userData.content().put("flights", allBookedFlights);
             JsonDocument response = bucket.upsert(userData);
-            return new ResponseEntity<String>(response.content().toString(), HttpStatus.OK);
+            JsonObject responseData = JsonObject.create()
+                .put("added", response.content().getArray("flights").size());
+            return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
         }
         return null;
     }

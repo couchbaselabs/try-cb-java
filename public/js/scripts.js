@@ -7,12 +7,15 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     $scope.cart=false;
     $scope.retEmpty=true;
     $scope.fliEmpty=true;
+    $scope.leave="";
+    $scope.ret="";
     $scope.rowCollectionLeave=[];
     $scope.rowCollectionRet=[];
     $scope.rowCollectionFlight=[];
     $scope.login = function(){
         var curUser=this.formData.username;
         $cookieStore.remove('token');
+        $cookieStore.remove('user');
         if(this.formData.h2.indexOf("Create")!=-1){
             $http.post("/api/user/login",{user:curUser,
                 password:md5.createHash(this.formData.password)})
@@ -21,6 +24,8 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                                          $scope.formData.error=null;
                                          //$cookieStore.put('token',response.data.success);
                                          $cookieStore.put('token',response.data.data.name);
+                                         //$cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user);
+                                         $cookieStore.put('user',response.data.data.name);
                                          $window.location.href="http://" + $window.location.host + "/index.html";
                                      }
                                       if(response.data.failure) {
@@ -35,7 +40,9 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                                       if(response.data.success){
                                           $scope.formData.error=null;
                                           //$cookieStore.put('token',response.data.success);
+                                          //$cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user)
                                           $cookieStore.put('token',response.data.data.name);
+                                          $cookieStore.put('user',response.data.data.name);
                                           $window.location.href="http://" + $window.location.host + "/index.html";
                                       }
                                       if(response.data.failure) {
@@ -44,16 +51,6 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                                   });
             }
         }
-
-    $scope.getUser = function(){
-        try {
-            //return jwtHelper.decodeToken($cookieStore.get('token')).user;
-            return $cookieStore.get("token");
-        } catch (e){
-            ngCart.empty();
-            $window.location.href="http://" + $window.location.host + "/login.html";
-        }
-    }
     $scope.findAirports=function(val){
         return $http.get("/api/airport/findAll",{
             params:{search:val}
@@ -65,6 +62,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         $scope.empty = true;
         $scope.rowCollectionLeave = [];
         $scope.rowCollectionRet = [];
+        $scope.leave=this.leave;
         $http.get("/api/flightPath/findAll", {
             params: {from: this.fromName, to: this.toName, leave: this.leave}
         }).then(function (response) {
@@ -72,10 +70,14 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                 $scope.empty = false;
             }
             for (var j = 0; j < response.data.length; j++) {
+                var d= new Date(Date.parse($scope.leave + " " + response.data[j].utc));
+                d.setHours(d.getHours()+response.data[j].flighttime);
+                response.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
                 $scope.rowCollectionLeave.push(response.data[j]);
             }
         });
         if (this.ret) {
+            $scope.ret=this.ret;
             $http.get("/api/flightPath/findAll", {
                 params: {from: this.toName, to: this.fromName, leave: this.ret}
             }).then(function (responseRet) {
@@ -83,6 +85,9 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                     $scope.retEmpty = false;
                 }
                 for (var j = 0; j < responseRet.data.length; j++) {
+                    var d= new Date(Date.parse($scope.ret + " " + responseRet.data[j].utc));
+                    d.setHours(d.getHours()+responseRet.data[j].flighttime);
+                    responseRet.data[j].utcland = d.getHours() + ":" + d.getMinutes() + ":00";
                     $scope.rowCollectionRet.push(responseRet.data[j]);
                 }
             });
@@ -113,7 +118,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         $scope.rowCollectionLeave=[];
         $scope.rowCollectionLeave.push(row);
         row.date=this.leave;
-        ngCart.addItem(row.flight,row.name +"-"+row.flight,100,1,row);
+        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
         var tempRet=[];
         for (var k=0;k<$scope.rowCollectionRet.length;k++){
             if($scope.rowCollectionRet[k].name == row.name){
@@ -134,7 +139,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         $scope.rowCollectionRet=[];
         $scope.rowCollectionRet.push(row);
         row.date=this.ret;
-        ngCart.addItem(row.flight,row.name +"-"+row.flight,100,1,row);
+        ngCart.addItem(row.flight,row.name +"-"+row.flight,row.price,1,row);
         var tempLeave=[];
         for (var j=0;j<$scope.rowCollectionLeave.length;j++){
             if($scope.rowCollectionLeave[j].name == row.name){
@@ -158,13 +163,13 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
         if(!state){
             $("#retDate").hide();
             $("#retSpan").hide();
-            $("#retLabel").html("One Way");
+            $("#retLabel").html("ONE WAY");
             $scope.retEmpty=true;
             $scope.$apply();
         }else{
             $("#retDate").show();
             $("#retSpan").show();
-            $("#retLabel").html("Round Trip");
+            $("#retLabel").html("ROUND TRIP");
             $scope.retEmpty=false;
             $scope.$apply();
         }
