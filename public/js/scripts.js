@@ -14,7 +14,6 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     $scope.rowCollectionFlight=[];
     $scope.login = function(){
         var curUser=this.formData.username;
-        $cookieStore.remove('token');
         $cookieStore.remove('user');
         if(this.formData.h2.indexOf("Create")!=-1){
             $http.post("/api/user/login",{user:curUser,
@@ -22,9 +21,6 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                 .then(function(response){
                                      if(response.data.success){
                                          $scope.formData.error=null;
-                                         //$cookieStore.put('token',response.data.success);
-                                         $cookieStore.put('token',response.data.data.name);
-                                         //$cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user);
                                          $cookieStore.put('user',response.data.data.name);
                                          $window.location.href="http://" + $window.location.host + "/index.html";
                                      }
@@ -39,9 +35,6 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
                 .then(function(response){
                                       if(response.data.success){
                                           $scope.formData.error=null;
-                                          //$cookieStore.put('token',response.data.success);
-                                          //$cookieStore.put('user',jwtHelper.decodeToken(response.data.success).user)
-                                          $cookieStore.put('token',response.data.data.name);
                                           $cookieStore.put('user',response.data.data.name);
                                           $window.location.href="http://" + $window.location.host + "/index.html";
                                       }
@@ -95,7 +88,7 @@ testapp.controller('flightController',function($scope,$http,$window,ngCart,md5,$
     }
     $scope.findBookedFlights = function(){
         $http.get("/api/user/flights",{
-            params:{token:$cookieStore.get('token')}
+            params:{username:$cookieStore.get('user')}
         }).then(function(responseFlights){
             if (responseFlights.data.length > 0) {
                 $scope.fliEmpty = false;

@@ -148,7 +148,7 @@ angular.module('ngCart', ['ngCart.directives'])
         };
 
         this.empty = function () {
-            
+
             $rootScope.$broadcast('ngCart:change', {});
             this.$cart.items = [];
             localStorage.removeItem('cart');
@@ -383,7 +383,7 @@ angular.module('ngCart.directives', ['ngCart.fulfilment'])
             link: function (scope, element, attrs) {
                 scope.book = function () {
                     $http.post('/api/user/flights', {
-                        token: $cookieStore.get('token'),
+                        username: $cookieStore.get('user'),
                         flights: this.ngCart.getItems()
                     })
                         .then(function (response) {

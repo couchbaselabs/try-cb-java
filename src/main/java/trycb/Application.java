@@ -109,12 +109,12 @@ public class Application implements Filter {
     @RequestMapping(value="/user/flights", method=RequestMethod.POST)
     public Object book(@RequestBody String json) {
         JsonObject jsonData = JsonObject.fromJson(json);
-        return Database.flights(bucket(), jsonData.getString("token"), jsonData.getArray("flights").toString());
+        return Database.flights(bucket(), jsonData.getString("username"), jsonData.getArray("flights"));
     }
 
     @RequestMapping(value="/user/flights", method=RequestMethod.GET)
-    public Object booked(@RequestParam String token) {
-        return Database.getFlights(bucket(), token);
+    public Object booked(@RequestParam String username) {
+        return Database.getFlights(bucket(), username);
     }
 
     // ======

@@ -120,7 +120,7 @@ public class Database {
         JsonDocument doc = bucket.get("user::" + username);
         if(BCrypt.checkpw(password, doc.content().getString("password"))) {
             JsonObject response = JsonObject.create()
-                .put("success", "sometokenhere")
+                .put("success", "true")
                 .put("data", doc.content());
             return new ResponseEntity<String>(response.toString(), HttpStatus.OK);
         }
@@ -129,18 +129,33 @@ public class Database {
         return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
     }
 
+    /*
+     * Create a new account for a user if it does not already exist
+     *
+     * @param    Bucket bucket
+     * @param    String username
+     * @param    String password
+     * @return   ResponseEntity<String> userData
+     */
     public static ResponseEntity<String> createLogin(final Bucket bucket, final String username, final String password) {
-        JsonObject data = JsonObject.empty()
+        /*
+         * Create a new JSON object to store all the user data.  For security,
+         * the users password will be encrypted using BCrypt
+         */
+        JsonObject data = JsonObject.create()
             .put("_type", "User")
             .put("_id", "")
-            .put("token", Base64.encode(("{user: " + username + "}").getBytes()).toString())
             .put("name", username)
             .put("password", BCrypt.hashpw(password, BCrypt.gensalt()));
         JsonDocument doc = JsonDocument.create("user::" + username, data);
+        /*
+         * If an exception is thrown, the user document could not be created,
+         * probably because it already exists.
+         */
         try {
             JsonDocument response = bucket.insert(doc);
             JsonObject responseData = JsonObject.create()
-                .put("success", "sometokenhere")
+                .put("success", "true")
                 .put("data", data);
             return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
         } catch (Exception e) {
@@ -151,16 +166,14 @@ public class Database {
         }
     }
 
-    public static ResponseEntity<String> flights(final Bucket bucket, final String token, final String newFlights) {
-        JsonDocument userData = bucket.get("user::" + token);
+    public static ResponseEntity<String> flights(final Bucket bucket, final String username, final JsonArray newFlights) {
+        JsonDocument userData = bucket.get("user::" + username);
         if(userData != null) {
             JsonArray allBookedFlights = userData.content().getArray("flights");
             if(allBookedFlights == null) {
                 allBookedFlights = JsonArray.create();
             }
-            JsonArray newFlightsJson = JsonArray.fromJson(newFlights);
-            JsonObject curFlightJsonObject = null;
-            for(Object temp : newFlightsJson.toList()) {
+            for(Object temp : newFlights.toList()) {
                 Map<String, Object> t = (Map<String, Object>) ((Map<String, Object>) temp).get("_data");
                 JsonObject flightJson = JsonObject.empty()
                     .put("name", t.get("name"))
@@ -180,8 +193,8 @@ public class Database {
         return null;
     }
 
-    public static ResponseEntity<String> getFlights(final Bucket bucket, final String token) {
-        JsonDocument doc = bucket.get("user::" + token);
+    public static ResponseEntity<String> getFlights(final Bucket bucket, final String username) {
+        JsonDocument doc = bucket.get("user::" + username);
         if(doc != null) {
             return new ResponseEntity<String>(doc.content().getArray("flights").toString(), HttpStatus.OK);
         }
