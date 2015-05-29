@@ -26,6 +26,7 @@ import com.couchbase.client.java.query.Query;
 import com.couchbase.client.java.query.QueryResult;
 import com.couchbase.client.java.query.QueryRow;
 import com.couchbase.client.java.query.Statement;
+import com.couchbase.client.java.query.dsl.Sort;
 import com.couchbase.client.java.query.dsl.path.AsPath;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
@@ -94,13 +95,24 @@ public class Database {
             }
         }
 
+        /*
         String joinQuery = "SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment FROM `"
             + bucket.name() + "` r UNNEST r.schedule s JOIN `" + bucket.name() + "` a ON KEYS r.airlineid WHERE r.sourceairport='"
             + fromAirport + "' AND r.destinationairport='" + toAirport + "' AND s.day="
             + leave.get(Calendar.DAY_OF_MONTH) + " ORDER BY a.name";
+        */
 
-        logQuery(joinQuery);
-        QueryResult otherResult = bucket.query(Query.simple(joinQuery));
+        Statement joinQuery = select("a.name", "s.flight", "s.utc", "r.sourceairport", "r.destinationairport", "r.equipment")
+                .from(i(bucket.name()).as("r"))
+                .unnest("r.schedule AS s")
+                .join(i(bucket.name()).as("a") + " ON KEYS r.airlineid")
+                .where(x("r.sourceairport").eq(s(fromAirport)).and(x("r.destinationairport").eq(s(toAirport))).and(x("s.day").eq(leave.get(Calendar.DAY_OF_MONTH))))
+                .orderBy(Sort.asc("a.name"));
+
+        //logQuery(joinQuery);
+        System.out.println(joinQuery.toString());
+        //QueryResult otherResult = bucket.query(Query.simple(joinQuery));
+        QueryResult otherResult = bucket.query(joinQuery);
         return extractResultOrThrow(otherResult);
     }
 

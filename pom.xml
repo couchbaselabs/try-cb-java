@@ -31,9 +31,18 @@
         <dependency>
             <groupId>com.couchbase.client</groupId>
             <artifactId>java-client</artifactId>
-            <version>2.1.2</version>
+            <version>2.2.0-dp</version>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>couchbase</id>
+            <name>couchbase repo</name>
+            <url>http://files.couchbase.com/maven2</url>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
