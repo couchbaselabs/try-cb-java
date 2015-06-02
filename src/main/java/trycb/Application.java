@@ -24,12 +24,15 @@ package trycb;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.CouchbaseCluster;
+import com.couchbase.client.java.document.json.JsonObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -90,6 +93,28 @@ public class Application implements Filter {
         Calendar calendar = Calendar.getInstance(Locale.US);
         calendar.setTime(DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse(leave));
         return Database.findAllFlightPaths(bucket(), from, to, calendar);
+    }
+
+    @RequestMapping(value="/user/login", method=RequestMethod.GET)
+    public Object login(@RequestParam String user, @RequestParam String password) {
+        return Database.login(bucket(), user, password);
+    }
+
+    @RequestMapping(value="/user/login", method=RequestMethod.POST)
+    public Object createLogin(@RequestBody String json) {
+        JsonObject jsonData = JsonObject.fromJson(json);
+        return Database.createLogin(bucket(), jsonData.getString("user"), jsonData.getString("password"));
+    }
+
+    @RequestMapping(value="/user/flights", method=RequestMethod.POST)
+    public Object book(@RequestBody String json) {
+        JsonObject jsonData = JsonObject.fromJson(json);
+        return Database.flights(bucket(), jsonData.getString("username"), jsonData.getArray("flights"));
+    }
+
+    @RequestMapping(value="/user/flights", method=RequestMethod.GET)
+    public Object booked(@RequestParam String username) {
+        return Database.getFlights(bucket(), username);
     }
 
     // ======

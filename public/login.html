@@ -1,0 +1,59 @@
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Couchbase Travel Sample </title>
+    <!-- Bootstrap core CSS-->
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <!-- Bootstrap CSS and bootstrap datepicker CSS used for styling the demo pages-->
+      <link rel="stylesheet" href="css/datepicker.css">
+      <link rel="stylesheet" href="css/bootstrap.css">
+      <link rel="stylesheet" href="css/bootstrap-switch.min.css">
+      <link rel="stylesheet" href="css/style.css">
+      <script src="js/jquery.min.js"></script>
+      <script src="js/bootstrap.min.js"></script>
+      <script src="js/bootstrap-datepicker.js"></script>
+      <script src="js/bootstrap-switch.min.js"></script>
+      <script src="js/angular.min.js"></script>
+      <script src="js/ui-bootstrap.min.js"></script>
+      <script src="js/ui-bootstrap-tpls.min.js"></script>
+      <script src="js/ngCart.js"></script>
+      <script src="js/angular-md5.min.js"></script>
+      <script src="js/angular-cookies.min.js"></script>
+      <script src="js/angular-jwt.min.js"></script>
+      <script src="js/scripts.js"></script>
+    <style>
+       body {padding-top: 40px;padding-bottom: 40px;background-color: #eee;}
+       .form-signin {max-width: 330px;padding: 5px;margin: 0 auto;}
+    </style>
+  </head>
+  <body ng-app="testApp" ng-controller="flightController">
+    <div class="container">
+      <form role="form" ng-submit="login()" class="form-signin" name="loginForm" novalidate>
+          <div class="row">
+              <div class="col-xs-12">
+                  <img src="images/CBTravel.LOGO.png">
+              </div>
+          </div>
+        <h3 class="form-signin-heading">{{formData.h2}}</h3>
+          <div class="alert alert-warning" role="alert" ng-show="formData.error">{{formData.error}}</div>
+        <input type="text" placeholder="Please Enter Your Email Address" required name="username"
+               ng-model="formData.username"
+               ng-change="formData.error=null"
+               class="form-control"/>
+          <input type="password" placeholder="Enter a password" required="" name="password"
+                 ng-model="formData.password"
+                 ng-change="formData.error=null"
+                 class="form-control"/>
+          <label class="checkbox">
+              <input type="checkbox" ng-checked="true" name="h2" ng-model="formData.h2"
+                     ng-true-value='"Please Take a Moment to Create an Account"'
+                     ng-false-value='"Please Enter Your Username and Password"'/>New User
+          </label>
+        <button type="submit" class="btn btn-lg btn-primary btn-block">Sign in</button>
+      </form>
+    </div>
+  </body>
+</html>

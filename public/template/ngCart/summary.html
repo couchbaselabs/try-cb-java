@@ -1,0 +1,32 @@
+<div class="col-xs-6">
+    <div class="row">
+        <div class="col-xs-12 text-right">
+            <small>LOGGED IN AS:</small>
+            {{getUser()}}
+        <a href="/login.html">| LOGOUT</a></div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 text-right"><Small>SHOPPING CART:</Small>{{ ngCart.getTotalItems() }}
+            <ng-pluralize count="ngCart.getTotalItems()" when="{1: 'item', 'other':'items'}"></ng-pluralize>
+            <small>({{ ngCart.totalCost() | currency }})</small>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 text-right">
+            <a class="btn btn-default" ng-class="{ active: isActive('/index.html')}" href="/">
+                <i class="glyphicon glyphicon-send">
+                </i>
+            </a>
+            <a class="btn btn-default" ng-class="{ active: isActive('/cart.html')}" ui-sref="site.cart"
+               href="/cart.html">
+                <i class="glyphicon glyphicon-shopping-cart">
+                </i>
+            </a>
+            <a class="btn btn-default" ng-class="{ active: isActive('/user.html')}" href="/user.html">
+                <i class="glyphicon glyphicon-user">
+                </i>
+            </a>
+        </div>
+    </div>
+</div>
+

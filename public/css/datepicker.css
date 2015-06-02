@@ -447,7 +447,7 @@
     height: 16px;
 }
 .input-daterange input {
-    text-align: center;
+    text-align: left;
 }
 .input-daterange input:first-child {
     -webkit-border-radius: 3px 0 0 3px;

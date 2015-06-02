@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Couchbase Travel || 2015</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Bootstrap CSS and bootstrap datepicker CSS used for styling the demo pages-->
+    <link rel="stylesheet" href="css/datepicker.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap-switch.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-datepicker.js"></script>
+    <script src="js/bootstrap-switch.min.js"></script>
+    <script src="js/angular.min.js"></script>
+    <script src="js/ui-bootstrap.min.js"></script>
+    <script src="js/ui-bootstrap-tpls.min.js"></script>
+    <script src="js/ngCart.js"></script>
+    <script src="js/angular-md5.min.js"></script>
+    <script src="js/angular-cookies.min.js"></script>
+    <script src="js/angular-jwt.min.js"></script>
+    <script src="js/scripts.js"></script>
+</head>
+<body ng-app="testApp" ng-controller="flightController">
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="container-fluid panel-container">
+                        <div class="col-xs-6 text-left">
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <img src="images/CBTravel.LOGO.png">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <small><strong>USER PROFILE</strong></small>
+                                </div>
+                            </div>
+                        </div>
+                        <ngcart-summary></ngcart-summary>
+                    </div>
+                </div>
+                <div class="panel-body" ng-init="findBookedFlights()" >
+                    <h5>TOTAL BOOKED FLIGHTS: {{rowCollectionFlight.length}}</h5>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Airline</th>
+                            <th>Flight</th>
+                            <th>Departure</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Reservation</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr ng-repeat="row in rowCollectionFlight">
+                            <td>{{row.name}}</td>
+                            <td>{{row.flight}}</td>
+                            <td>{{row.date}}</td>
+                            <td>{{row.sourceairport | uppercase}}</td>
+                            <td>{{row.destinationairport | uppercase}}</td>
+                            <td>
+                               Confirmed
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="panel-footer panel-default clearfix"><div class="row pull-right"><img
+                        src="images/poweredBy.01.png"/></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

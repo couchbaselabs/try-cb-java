@@ -1,0 +1,91 @@
+
+<div class="alert alert-warning" role="alert" ng-show="ngCart.getTotalItems() === 0 && !ngCart.$cart.complete">
+    Your cart is empty - Click the user profile icon above to view previously booked itineraries.
+</div>
+<div class="alert alert-info" role="alert" ng-show="ngCart.getTotalItems() === 0 && ngCart.$cart.complete">
+    <a href="#" class="close" data-dismiss="alert" ng-click="ngCart.$cart.complete=false;">&times;</a>
+    <strong>Success:</strong>  Itinerary booked!
+</div>
+<div class="table-responsive col-lg-12" ng-show="ngCart.getTotalItems() > 0">
+
+    <table class="table table-striped ngCart cart">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Airline</th>
+            <th>Flight</th>
+            <th>Date</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Seats</th>
+            <th>Amount</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tfoot>
+        <tr ng-show="ngCart.getTax()">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>Tax ({{ ngCart.getTaxRate() }}%):</td>
+            <td>{{ ngCart.getTax() | currency }}</td>
+        </tr>
+        <tr ng-show="ngCart.getShipping()">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>Shipping:</td>
+            <td>{{ ngCart.getShipping() | currency }}</td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>Total:</td>
+            <td>{{ ngCart.totalCost() | currency }}</td>
+        </tr>
+        </tfoot>
+        <tbody>
+        <tr ng-repeat="item in ngCart.getCart().items track by $index">
+            <td><span ng-click="ngCart.removeItemById(item.getId())" class="glyphicon glyphicon-remove"></span></td>
+            <td>{{item.getData().name}}</td>
+            <td>{{item.getData().flight}}</td>
+            <td>{{item.getData().date + " " +item.getData().utc}}</td>
+            <td>{{item.getData().sourceairport | uppercase}}</td>
+            <td>{{item.getData().destinationairport | uppercase}}</td>
+
+            <td><span class="glyphicon glyphicon-minus" ng-class="{'disabled':item.getQuantity()==1}"
+                      ng-click="item.setQuantity(-1, true)"></span>&nbsp;&nbsp;
+                {{ item.getQuantity() | number }}&nbsp;&nbsp;
+                <span class="glyphicon glyphicon-plus" ng-click="item.setQuantity(1, true)"></span></td>
+            <td>{{ item.getPrice() | currency}}</td>
+            <td>{{ item.getTotal() | currency }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div class="col-xs-12">
+    <button class="btn btn-primary pull-right btn-sm" type="button" ng-click="book()"
+            ng-disabled="ngCart.getTotalItems() === 0">Book
+        Flights</button>
+</div>
+<style>
+    .ngCart.cart span[ng-click] {
+        cursor: pointer;
+    }
+    .ngCart.cart .glyphicon.disabled {
+        color:#aaa;
+    }
+</style>
