@@ -108,8 +108,9 @@ public class Database {
                 .from(i(bucket.name()).as("r"))
                 .unnest("r.schedule AS s")
                 .join(i(bucket.name()).as("a") + " ON KEYS r.airlineid")
-                .where(x("r.sourceairport").eq(s(fromAirport)).and(x("r.destinationairport").eq(s(toAirport))).and(x("s.day").eq(leave.get(Calendar.DAY_OF_MONTH))))
+                .where(x("r.sourceairport").eq(s(fromAirport)).and(x("r.destinationairport").eq(s(toAirport))).and(x("s.day").eq(leave.get(Calendar.DAY_OF_WEEK))))
                 .orderBy(Sort.asc("a.name"));
+        logQuery(joinQuery.toString());
 
         QueryResult otherResult = bucket.query(joinQuery);
         return extractResultOrThrow(otherResult);
