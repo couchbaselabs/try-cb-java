@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALING
  * IN THE SOFTWARE.
  */
-package trycb;
+package trycb.data;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
@@ -37,6 +37,7 @@ import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -47,11 +48,12 @@ import static com.couchbase.client.java.query.dsl.Expression.i;
 import static com.couchbase.client.java.query.dsl.Expression.s;
 import static com.couchbase.client.java.query.dsl.Expression.x;
 
-public class Database {
+@Component
+public class Dao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Database.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Dao.class);
 
-    private Database() {}
+    private Dao() {}
 
     /**
      * Find all airports.

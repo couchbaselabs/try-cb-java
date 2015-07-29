@@ -11,30 +11,38 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.2.3.RELEASE</version>
+        <version>1.2.5.RELEASE</version>
     </parent>
 
     <dependencies>
+        <!-- spring boot with web support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+
+        <!-- the couchbase java sdk -->
+        <dependency>
+            <groupId>com.couchbase.client</groupId>
+            <artifactId>java-client</artifactId>
+            <version>2.2.0-dp2</version>
+        </dependency>
+
+        <!-- tx for some data exceptions -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
         </dependency>
+
+        <!-- security for bcrypt support -->
         <dependency>
         	<groupId>org.springframework.security</groupId>
         	<artifactId>spring-security-core</artifactId>
         	<version>4.0.1.RELEASE</version>
         </dependency>
-        <dependency>
-            <groupId>com.couchbase.client</groupId>
-            <artifactId>java-client</artifactId>
-            <version>2.2.0-dp</version>
-        </dependency>
     </dependencies>
 
+    <!-- for couchbase prereleases, use the couchbase repo -->
     <repositories>
         <repository>
             <id>couchbase</id>
@@ -44,6 +52,7 @@
         </repository>
     </repositories>
 
+    <!-- spring boot maven plugin for command line utils -->
     <build>
         <plugins>
             <plugin>

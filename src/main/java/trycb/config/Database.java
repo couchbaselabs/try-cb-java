@@ -19,16 +19,33 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALING
  * IN THE SOFTWARE.
  */
-package trycb;
+package trycb.config;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.couchbase.client.java.Bucket;
+import com.couchbase.client.java.Cluster;
+import com.couchbase.client.java.CouchbaseCluster;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@SpringBootApplication
-public class Application {
+@Configuration
+public class Database {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+    @Value("${hostname}")
+    private String hostname;
+
+    @Value("${bucket}")
+    private String bucket;
+
+    @Value("${password}")
+    private String password;
+
+    public @Bean Cluster cluster() {
+        return CouchbaseCluster.create(hostname);
+    }
+
+    public @Bean Bucket bucket() {
+        return cluster().openBucket(bucket, password);
     }
 
 }

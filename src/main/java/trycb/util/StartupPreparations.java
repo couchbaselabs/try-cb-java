@@ -19,7 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALING
  * IN THE SOFTWARE.
  */
-package trycb;
+package trycb.util;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.query.Query;
