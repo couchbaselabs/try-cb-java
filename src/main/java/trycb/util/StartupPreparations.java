@@ -84,7 +84,7 @@ public class StartupPreparations implements InitializingBean {
         indexesToCreate.removeAll(foundIndexes);
 
         if (!hasPrimary) {
-            String query = "CREATE PRIMARY INDEX def_primary ON `" + bucket.name() + "` USING gsi WITH {\"defer_build\":true}";
+            String query = "CREATE PRIMARY INDEX def_primary ON `" + bucket.name() + "` WITH {\"defer_build\":true}";
             LOGGER.info("Executing index query: {}", query);
             QueryResult result = bucket.query(Query.simple(query));
             if (result.finalSuccess()) {
@@ -96,7 +96,7 @@ public class StartupPreparations implements InitializingBean {
 
         for (String name : indexesToCreate) {
             String query = "CREATE INDEX " + name + " ON `" + bucket.name() + "` (" + name.replace("def_", "") + ") "
-                + "USING gsi WITH {\"defer_build\":true}\"";
+                + "WITH {\"defer_build\":true}\"";
             LOGGER.info("Executing index query: {}", query);
             QueryResult result = bucket.query(Query.simple(query));
             if (result.finalSuccess()) {
@@ -125,7 +125,7 @@ public class StartupPreparations implements InitializingBean {
             indexes.append(",").append("def_primary");
         }
 
-        String query = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ") USING GSI";
+        String query = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ")";
         LOGGER.info("Executing index query: {}", query);
         QueryResult result = bucket.query(Query.simple(query));
         if (result.finalSuccess()) {
