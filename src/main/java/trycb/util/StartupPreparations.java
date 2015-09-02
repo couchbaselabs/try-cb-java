@@ -22,9 +22,9 @@
 package trycb.util;
 
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.query.Query;
-import com.couchbase.client.java.query.QueryResult;
-import com.couchbase.client.java.query.QueryRow;
+import com.couchbase.client.java.query.N1qlQuery;
+import com.couchbase.client.java.query.N1qlQueryResult;
+import com.couchbase.client.java.query.N1qlQueryRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -61,8 +61,8 @@ public class StartupPreparations implements InitializingBean {
     private void ensureIndexes() throws Exception {
         LOGGER.info("Ensuring all Indexes are created.");
 
-        QueryResult indexResult = bucket.query(
-            Query.simple(select("indexes.*").from("system:indexes").where(i("keyspace_id").eq(s(bucket.name()))))
+        N1qlQueryResult indexResult = bucket.query(
+            N1qlQuery.simple(select("indexes.*").from("system:indexes").where(i("keyspace_id").eq(s(bucket.name()))))
         );
 
 
@@ -73,7 +73,7 @@ public class StartupPreparations implements InitializingBean {
 
         boolean hasPrimary = false;
         List<String> foundIndexes = new ArrayList<String>();
-        for (QueryRow indexRow : indexResult) {
+        for (N1qlQueryRow indexRow : indexResult) {
             String name = indexRow.value().getString("name");
             if (name.equals("#primary")) {
                 hasPrimary = true;
@@ -86,7 +86,7 @@ public class StartupPreparations implements InitializingBean {
         if (!hasPrimary) {
             String query = "CREATE PRIMARY INDEX def_primary ON `" + bucket.name() + "` WITH {\"defer_build\":true}";
             LOGGER.info("Executing index query: {}", query);
-            QueryResult result = bucket.query(Query.simple(query));
+            N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
             if (result.finalSuccess()) {
                 LOGGER.info("Successfully created primary index.");
             } else {
@@ -98,7 +98,7 @@ public class StartupPreparations implements InitializingBean {
             String query = "CREATE INDEX " + name + " ON `" + bucket.name() + "` (" + name.replace("def_", "") + ") "
                 + "WITH {\"defer_build\":true}\"";
             LOGGER.info("Executing index query: {}", query);
-            QueryResult result = bucket.query(Query.simple(query));
+            N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
             if (result.finalSuccess()) {
                 LOGGER.info("Successfully created index with name {}.", name);
             } else {
@@ -127,7 +127,7 @@ public class StartupPreparations implements InitializingBean {
 
         String query = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ")";
         LOGGER.info("Executing index query: {}", query);
-        QueryResult result = bucket.query(Query.simple(query));
+        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
         if (result.finalSuccess()) {
             LOGGER.info("Successfully executed build index query.");
         } else {

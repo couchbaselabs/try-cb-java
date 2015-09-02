@@ -1,9 +1,9 @@
 package trycb.service;
 
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.query.Query;
-import com.couchbase.client.java.query.QueryResult;
-import com.couchbase.client.java.query.QueryRow;
+import com.couchbase.client.java.query.N1qlQuery;
+import com.couchbase.client.java.query.N1qlQueryResult;
+import com.couchbase.client.java.query.N1qlQueryRow;
 import com.couchbase.client.java.query.Statement;
 import com.couchbase.client.java.query.dsl.Sort;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ public class FlightPath {
             .where(x("airportname").eq(s(to)));
 
         logQuery(query.toString());
-        QueryResult result = bucket.query(Query.simple(query));
+        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
 
         if (!result.finalSuccess()) {
             LOGGER.warn("Query returned with errors: " + result.errors());
@@ -47,7 +47,7 @@ public class FlightPath {
 
         String fromAirport = null;
         String toAirport = null;
-        for (QueryRow row : result) {
+        for (N1qlQueryRow row : result) {
             if (row.value().containsKey("fromAirport")) {
                 fromAirport = row.value().getString("fromAirport");
             }
@@ -64,21 +64,21 @@ public class FlightPath {
             .orderBy(Sort.asc("a.name"));
         logQuery(joinQuery.toString());
 
-        QueryResult otherResult = bucket.query(joinQuery);
+        N1qlQueryResult otherResult = bucket.query(joinQuery);
         return extractResultOrThrow(otherResult);
     }
 
     /**
      * Extract a N1Ql result or throw if there is an issue.
      */
-    private static List<Map<String, Object>> extractResultOrThrow(QueryResult result) {
+    private static List<Map<String, Object>> extractResultOrThrow(N1qlQueryResult result) {
         if (!result.finalSuccess()) {
             LOGGER.warn("Query returned with errors: " + result.errors());
             throw new DataRetrievalFailureException("Query error: " + result.errors());
         }
 
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        for (QueryRow row : result) {
+        for (N1qlQueryRow row : result) {
             content.add(row.value().toMap());
         }
         return content;
