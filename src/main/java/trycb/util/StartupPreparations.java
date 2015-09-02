@@ -81,7 +81,7 @@ public class StartupPreparations implements InitializingBean {
         List<String> foundIndexes = new ArrayList<String>();
         for (N1qlQueryRow indexRow : indexResult) {
             String name = indexRow.value().getString("name");
-            Boolean isPrimary = indexRow.value().getBoolean("isPrimary");
+            Boolean isPrimary = indexRow.value().getBoolean("is_primary");
             if (name.equals(PRIMARY_NAME) || isPrimary == Boolean.TRUE) {
                 hasPrimary = true;
             } else {
@@ -114,23 +114,32 @@ public class StartupPreparations implements InitializingBean {
             }
         }
 
-        LOGGER.info("Waiting 5 seconds before building the indexes.");
+        //prepare the list of indexes to build (both primary and secondary indexes)
+        List<String> indexesToBuild = new ArrayList<String>(indexesToCreate.size()+1);
+        indexesToBuild.addAll(indexesToCreate);
+        if (!hasPrimary) {
+            indexesToBuild.add(PRIMARY_NAME);
+        }
 
+        //skip the build step if all indexes have been found
+        if (indexesToBuild.isEmpty()) {
+            LOGGER.info("All indexes are already in place, nothing to build");
+            return;
+        }
+
+        LOGGER.info("Waiting 5 seconds before building the indexes.");
         Thread.sleep(5000);
 
+        //trigger the build
         StringBuilder indexes = new StringBuilder();
         boolean first = true;
-        for (String name : indexesToCreate) {
+        for (String name : indexesToBuild) {
             if (first) {
                 first = false;
             } else {
                 indexes.append(",");
             }
             indexes.append(name);
-        }
-
-        if (!hasPrimary) {
-            indexes.append(",").append(PRIMARY_NAME);
         }
 
         String query = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ")";
