@@ -21,11 +21,11 @@ If you want to run the application from your IDE rather than from the command li
 work with maven-based projects. We recommend running IntelliJ IDEA, but Eclipse or Netbeans will also work.
 
 ## Running the Application
-To download the application you can either download [the archive](https://github.com/daschl/try-cb-java/archive/master.zip) or
+To download the application you can either download [the archive](https://github.com/couchbaselabs/try-cb-java/archive/master.zip) or
 clone the repository:
 
 ```
-$ git clone https://github.com/daschl/try-cb-java.git
+$ git clone https://github.com/couchbaselabs/try-cb-java.git
 ```
 
 Now change into the directory (`$ cd try-cb-java`) and then run the following maven command.
