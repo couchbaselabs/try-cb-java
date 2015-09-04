@@ -19,7 +19,9 @@ public class User {
         JsonDocument doc = bucket.get("user::" + username);
 
         JsonObject responseContent;
-        if(BCrypt.checkpw(password, doc.content().getString("password"))) {
+        if (doc == null) {
+            responseContent = JsonObject.create().put("success", false).put("failure", "Bad Username or Password");
+        } else if(BCrypt.checkpw(password, doc.content().getString("password"))) {
             responseContent = JsonObject.create().put("success", true).put("data", doc.content());
         } else {
             responseContent = JsonObject.empty().put("success", false).put("failure", "Bad Username or Password");
