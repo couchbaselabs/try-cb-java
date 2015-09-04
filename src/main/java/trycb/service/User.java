@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+import rx.functions.Func1;
 
 @Service
 public class User {
@@ -91,11 +92,16 @@ public class User {
      * Show all booked flights for the given user.
      */
     public static ResponseEntity<String> getFlightsForUser(final Bucket bucket, final String username) {
-        JsonDocument doc = bucket.get("user::" + username);
-        if(doc != null) {
-            return new ResponseEntity<String>(doc.content().getArray("flights").toString(), HttpStatus.OK);
-        }
-
-        return new ResponseEntity<String>("{failure: 'No flights found'}", HttpStatus.OK);
+        return bucket.async()
+                     .get("user::" + username)
+                     .map(new Func1<JsonDocument, ResponseEntity<String>>() {
+                         @Override
+                         public ResponseEntity<String> call(JsonDocument doc) {
+                             return new ResponseEntity<String>(doc.content().getArray("flights").toString(), HttpStatus.OK);
+                         }
+                     })
+                     .defaultIfEmpty(new ResponseEntity<String>("{failure: 'No flights found'}", HttpStatus.OK))
+                     .toBlocking()
+                     .single();
     }
 }
