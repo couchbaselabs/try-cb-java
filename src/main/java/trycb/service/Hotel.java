@@ -7,10 +7,9 @@ import java.util.Map;
 
 import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.document.Document;
-import com.couchbase.client.java.search.HighlightStyle;
 import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.queries.AbstractFtsQuery;
+import com.couchbase.client.java.search.queries.ConjunctionQuery;
 import com.couchbase.client.java.search.result.SearchQueryResult;
 import com.couchbase.client.java.search.result.SearchQueryRow;
 import com.couchbase.client.java.subdoc.DocumentFragment;
@@ -36,7 +35,7 @@ public class Hotel {
      * Search for a hotel in a particular location.
      */
     public List<Map<String, Object>> findHotels(final String location, final String description) {
-        AbstractFtsQuery fts = SearchQuery.conjuncts(
+        ConjunctionQuery fts = SearchQuery.conjuncts(
                 SearchQuery.term("landmark").field("type"),
                 SearchQuery.disjuncts(
                         SearchQuery.matchPhrase(location).field("country"),
@@ -44,8 +43,17 @@ public class Hotel {
                         SearchQuery.matchPhrase(location).field("state"),
                         SearchQuery.matchPhrase(location).field("address")
                 ),
-                SearchQuery.matchPhrase(description).field("content"),
                 SearchQuery.match("hotel").field("content"));
+
+        if (description != null && !description.isEmpty() && !"*".equals(description)) {
+            fts.and(
+                SearchQuery.disjuncts(
+                        SearchQuery.matchPhrase(description).field("content"),
+                        SearchQuery.matchPhrase(description).field("name")
+                ));
+        }
+
+
         SearchQuery query = new SearchQuery("travel-search", fts);
 
         logQuery(query.export().toString());
@@ -59,7 +67,10 @@ public class Hotel {
     public List<Map<String, Object>> findHotels(final String description) {
         AbstractFtsQuery fts = SearchQuery.conjuncts(
                 SearchQuery.term("landmark").field("type"),
-                SearchQuery.matchPhrase(description).field("content"),
+                SearchQuery.disjuncts(
+                        SearchQuery.matchPhrase(description).field("content"),
+                        SearchQuery.matchPhrase(description).field("name")
+                ),
                 SearchQuery.match("hotel").field("content"));
         SearchQuery query = new SearchQuery("travel-search", fts);
 
