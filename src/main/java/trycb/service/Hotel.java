@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
+import com.couchbase.client.deps.com.fasterxml.jackson.core.JsonProcessingException;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.queries.ConjunctionQuery;
 import com.couchbase.client.java.search.result.SearchQueryResult;
 import com.couchbase.client.java.search.result.SearchQueryRow;
 import com.couchbase.client.java.subdoc.DocumentFragment;
+import com.couchbase.client.java.transcoder.JacksonTransformers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +65,14 @@ public class Hotel {
         SearchQueryResult result = bucket.query(query);
 
 
+        //prepare the context to send to the app
+        String ftsContext;
+        try {
+            ftsContext = JacksonTransformers.MAPPER.writerWithDefaultPrettyPrinter().
+                    writeValueAsString(query.export());
+        } catch (JsonProcessingException e) {
+            ftsContext = query.export().toString();
+        }
         String subdocContext = "DocumentFragment<Lookup> fragment = bucket\n" +
                 "                    .lookupIn(row.id())\n" +
                 "                    .get(\"country\")\n" +
@@ -72,8 +82,8 @@ public class Hotel {
                 "                    .get(\"name\")\n" +
                 "                    .get(\"content\")\n" +
                 "                    .execute();";
-        List<Map<String, Object>> data = extractResultOrThrow(result);
-        return new Result(data, query.export().toString(), subdocContext);
+
+        return Result.of(extractResultOrThrow(result), ftsContext, subdocContext);
     }
 
     /**

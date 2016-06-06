@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
+import trycb.model.Result;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +30,7 @@ public class Airport {
     /**
      * Find all airports.
      */
-    public static List<Map<String, Object>> findAll(final Bucket bucket, final String params) {
+    public static Result<List<Map<String, Object>>> findAll(final Bucket bucket, final String params) {
         Statement query;
 
         AsPath prefix = select("airportname").from(i(bucket.name()));
@@ -42,7 +44,8 @@ public class Airport {
 
         logQuery(query.toString());
         N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
-        return extractResultOrThrow(result);
+        List<Map<String, Object>> data = extractResultOrThrow(result);
+        return Result.of(data, query.toString());
     }
 
     /**
