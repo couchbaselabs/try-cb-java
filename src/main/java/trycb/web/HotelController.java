@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import trycb.model.Result;
 import trycb.service.Hotel;
 
 @RestController
@@ -22,17 +23,17 @@ public class HotelController {
     }
 
     @RequestMapping(value="/{description}/{location}/", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object findHotelsByDescriptionAndLocation(@PathVariable("location") String location, @PathVariable("description") String desc) {
+    public Result findHotelsByDescriptionAndLocation(@PathVariable("location") String location, @PathVariable("description") String desc) {
         return hotelService.findHotels(location, desc);
     }
 
     @RequestMapping(value="/{description}/", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object findHotelsByDescription(@PathVariable("description") String desc) {
+    public Result findHotelsByDescription(@PathVariable("description") String desc) {
         return hotelService.findHotels(desc);
     }
 
     @RequestMapping(value="/", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public Object findAllHotels() {
+    public Result findAllHotels() {
         return hotelService.findAllHotels();
     }
 

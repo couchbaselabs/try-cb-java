@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
+import trycb.model.Result;
 
 @Service
 public class Hotel {
@@ -33,7 +34,7 @@ public class Hotel {
     /**
      * Search for a hotel in a particular location.
      */
-    public List<Map<String, Object>> findHotels(final String location, final String description) {
+    public Result findHotels(final String location, final String description) {
         ConjunctionQuery fts = SearchQuery.conjuncts(
                 SearchQuery.term("landmark").field("type"),
                 SearchQuery.match("hotel").field("content"));
@@ -60,20 +61,32 @@ public class Hotel {
 
         logQuery(query.export().toString());
         SearchQueryResult result = bucket.query(query);
-        return extractResultOrThrow(result);
+
+
+        String subdocContext = "DocumentFragment<Lookup> fragment = bucket\n" +
+                "                    .lookupIn(row.id())\n" +
+                "                    .get(\"country\")\n" +
+                "                    .get(\"city\")\n" +
+                "                    .get(\"state\")\n" +
+                "                    .get(\"address\")\n" +
+                "                    .get(\"name\")\n" +
+                "                    .get(\"content\")\n" +
+                "                    .execute();";
+        List<Map<String, Object>> data = extractResultOrThrow(result);
+        return new Result(data, query.export().toString(), subdocContext);
     }
 
     /**
      * Search for an hotel.
      */
-    public List<Map<String, Object>> findHotels(final String description) {
+    public Result findHotels(final String description) {
         return findHotels("*", description);
     }
 
     /**
      * Find all hotels.
      */
-    public List<Map<String, Object>> findAllHotels() {
+    public Result findAllHotels() {
         return findHotels("*", "*");
     }
 

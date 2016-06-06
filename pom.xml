@@ -21,6 +21,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- lombok for leaner POJOs -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.8</version>
+        </dependency>
+
         <!-- the couchbase java sdk -->
         <dependency>
             <groupId>com.couchbase.client</groupId>
