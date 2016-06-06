@@ -8,7 +8,6 @@ import java.util.Map;
 import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.search.SearchQuery;
-import com.couchbase.client.java.search.queries.AbstractFtsQuery;
 import com.couchbase.client.java.search.queries.ConjunctionQuery;
 import com.couchbase.client.java.search.result.SearchQueryResult;
 import com.couchbase.client.java.search.result.SearchQueryRow;
@@ -37,13 +36,16 @@ public class Hotel {
     public List<Map<String, Object>> findHotels(final String location, final String description) {
         ConjunctionQuery fts = SearchQuery.conjuncts(
                 SearchQuery.term("landmark").field("type"),
-                SearchQuery.disjuncts(
+                SearchQuery.match("hotel").field("content"));
+
+        if (location != null && !location.isEmpty() && !"*".equals(location)) {
+            fts.and(SearchQuery.disjuncts(
                         SearchQuery.matchPhrase(location).field("country"),
                         SearchQuery.matchPhrase(location).field("city"),
                         SearchQuery.matchPhrase(location).field("state"),
                         SearchQuery.matchPhrase(location).field("address")
-                ),
-                SearchQuery.match("hotel").field("content"));
+                ));
+        }
 
         if (description != null && !description.isEmpty() && !"*".equals(description)) {
             fts.and(
@@ -53,8 +55,8 @@ public class Hotel {
                 ));
         }
 
-
-        SearchQuery query = new SearchQuery("travel-search", fts);
+        SearchQuery query = new SearchQuery("travel-search", fts)
+                .limit(100);
 
         logQuery(query.export().toString());
         SearchQueryResult result = bucket.query(query);
@@ -65,32 +67,14 @@ public class Hotel {
      * Search for an hotel.
      */
     public List<Map<String, Object>> findHotels(final String description) {
-        AbstractFtsQuery fts = SearchQuery.conjuncts(
-                SearchQuery.term("landmark").field("type"),
-                SearchQuery.disjuncts(
-                        SearchQuery.matchPhrase(description).field("content"),
-                        SearchQuery.matchPhrase(description).field("name")
-                ),
-                SearchQuery.match("hotel").field("content"));
-        SearchQuery query = new SearchQuery("travel-search", fts);
-
-        logQuery(query.export().toString());
-        SearchQueryResult result = bucket.query(query);
-        return extractResultOrThrow(result);
+        return findHotels("*", description);
     }
 
     /**
      * Find all hotels.
      */
     public List<Map<String, Object>> findAllHotels() {
-        AbstractFtsQuery fts = SearchQuery.conjuncts(
-                SearchQuery.term("landmark").field("type"),
-                SearchQuery.match("hotel").field("content"));
-        SearchQuery query = new SearchQuery("travel-search", fts);
-
-        logQuery(query.export().toString());
-        SearchQueryResult result = bucket.query(query);
-        return extractResultOrThrow(result);
+        return findHotels("*", "*");
     }
 
     /**
