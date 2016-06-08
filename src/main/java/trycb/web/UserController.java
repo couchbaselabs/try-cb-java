@@ -75,9 +75,12 @@ public class UserController {
             Map<String, Object> added = User.registerFlightForUser(bucket, jsonData.getString("username"), jsonData.getArray("flights"));
             return ResponseEntity.accepted()
                     .body(Result.of(added));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new Error("Forbidden, you don't have access to this cart"));
+                    .body(new Error("Forbidden, you can't book for this user"));
+        } catch(IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Error(e.getMessage()));
         }
 
     }

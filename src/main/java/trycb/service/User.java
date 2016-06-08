@@ -58,31 +58,46 @@ public class User {
     public static Map<String, Object> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
         JsonDocument userData = bucket.get("user::" + username);
         if (userData == null) {
-            throw new IllegalStateException("A user needs to be created first.");
+            throw new IllegalStateException();
         }
 
+        if (newFlights == null) {
+            throw new IllegalArgumentException("No flights in payload");
+        }
+
+        JsonArray added = JsonArray.empty();
         JsonArray allBookedFlights = userData.content().getArray("flights");
         if(allBookedFlights == null) {
             allBookedFlights = JsonArray.create();
         }
 
         for (Object newFlight : newFlights) {
-            JsonObject t = ((JsonObject) newFlight).getObject("_data");
-            JsonObject flightJson = JsonObject.empty()
-                .put("name", t.get("name"))
-                .put("flight", t.get("flight"))
-                .put("date", t.get("date"))
-                .put("sourceairport", t.get("sourceairport"))
-                .put("destinationairport", t.get("destinationairport"))
-                .put("bookedon", "");
-            allBookedFlights.add(flightJson);
+            checkFlight(newFlight);
+            JsonObject t = ((JsonObject) newFlight);
+            t.put("bookedon", "try-cb-java");
+            allBookedFlights.add(t);
+            added.add(t);
         }
 
         userData.content().put("flights", allBookedFlights);
         JsonDocument response = bucket.upsert(userData);
+
         JsonObject responseData = JsonObject.create()
-            .put("added", response.content().getArray("flights"));
+            .put("added", added);
         return responseData.toMap();
+    }
+
+    private static void checkFlight(Object f) {
+        if (f == null || !(f instanceof JsonObject)) {
+            throw new IllegalArgumentException("Each flight must be a non-null object");
+        }
+        JsonObject flight = (JsonObject) f;
+        if (!flight.containsKey("name")
+                || !flight.containsKey("date")
+                || !flight.containsKey("sourceairport")
+                || !flight.containsKey("destinationairport")) {
+            throw new IllegalArgumentException("Malformed flight inside flights payload");
+        }
     }
 
     /**
