@@ -1,5 +1,6 @@
 package trycb.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -93,7 +94,13 @@ public class User {
                      .map(new Func1<JsonDocument, List<Object>>() {
                          @Override
                          public List<Object> call(JsonDocument doc) {
-                             return doc.content().getArray("flights").toList();
+                             JsonObject data = doc.content();
+                             JsonArray flights = data.getArray("flights");
+                             if (flights != null) {
+                                 return flights.toList();
+                             } else {
+                                 return Collections.emptyList();
+                             }
                          }
                      })
                      .single()
