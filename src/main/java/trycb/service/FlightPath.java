@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static com.couchbase.client.java.query.Select.select;
 import static com.couchbase.client.java.query.dsl.Expression.i;
@@ -81,9 +82,13 @@ public class FlightPath {
             throw new DataRetrievalFailureException("Query error: " + result.errors());
         }
 
+        Random rand = new Random();
+
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
         for (N1qlQueryRow row : result) {
-            content.add(row.value().toMap());
+            content.add(row.value()
+                    .put("price", rand.nextInt(2000))
+                    .toMap());
         }
         return content;
     }
