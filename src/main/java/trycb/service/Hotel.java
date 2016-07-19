@@ -37,9 +37,7 @@ public class Hotel {
      * Search for a hotel in a particular location.
      */
     public Result findHotels(final String location, final String description) {
-        ConjunctionQuery fts = SearchQuery.conjuncts(
-                SearchQuery.term("landmark").field("type"),
-                SearchQuery.match("hotel").field("content"));
+        ConjunctionQuery fts = SearchQuery.conjuncts(SearchQuery.term("hotel").field("type"));
 
         if (location != null && !location.isEmpty() && !"*".equals(location)) {
             fts.and(SearchQuery.disjuncts(
@@ -53,12 +51,12 @@ public class Hotel {
         if (description != null && !description.isEmpty() && !"*".equals(description)) {
             fts.and(
                 SearchQuery.disjuncts(
-                        SearchQuery.matchPhrase(description).field("content"),
+                        SearchQuery.matchPhrase(description).field("description"),
                         SearchQuery.matchPhrase(description).field("name")
                 ));
         }
 
-        SearchQuery query = new SearchQuery("travel-search", fts)
+        SearchQuery query = new SearchQuery("hotels", fts)
                 .limit(100);
 
         logQuery(query.export().toString());
@@ -80,7 +78,7 @@ public class Hotel {
                 "                    .get(\"state\")\n" +
                 "                    .get(\"address\")\n" +
                 "                    .get(\"name\")\n" +
-                "                    .get(\"content\")\n" +
+                "                    .get(\"description\")\n" +
                 "                    .execute();";
 
         return Result.of(extractResultOrThrow(result), ftsContext, subdocContext);
@@ -118,7 +116,7 @@ public class Hotel {
                     .get("state")
                     .get("address")
                     .get("name")
-                    .get("content")
+                    .get("description")
                     .execute();
 
             Map<String, Object> map = new HashMap<String, Object>();
@@ -142,7 +140,7 @@ public class Hotel {
                 fullAddr.delete(fullAddr.length() - 2, fullAddr.length() - 1);
 
             map.put("name", fragment.content("name"));
-            map.put("description", fragment.content("content"));
+            map.put("description", fragment.content("description"));
             map.put("address", fullAddr.toString());
 
             content.add(map);
