@@ -16,7 +16,7 @@ import trycb.model.Result;
 import trycb.service.Airport;
 
 @RestController
-@RequestMapping("/api/airport")
+@RequestMapping("/api/airports")
 public class AirportController {
 
     private final Bucket bucket;
@@ -26,8 +26,8 @@ public class AirportController {
         this.bucket = bucket;
     }
 
-    @RequestMapping("/findAll")
-    public ResponseEntity<? extends IValue> airports(@RequestParam String search) {
+    @RequestMapping
+    public ResponseEntity<? extends IValue> airports(@RequestParam("search") String search) {
         try {
             Result<List<Map<String, Object>>> result = Airport.findAll(bucket, search);
             return ResponseEntity.ok(result);

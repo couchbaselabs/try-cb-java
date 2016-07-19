@@ -8,6 +8,7 @@ import com.couchbase.client.java.Bucket;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +17,7 @@ import trycb.model.IValue;
 import trycb.service.FlightPath;
 
 @RestController
-@RequestMapping("/api/flightPath")
+@RequestMapping("/api/flightPaths")
 public class FlightPathController {
 
     private final Bucket bucket;
@@ -27,8 +28,9 @@ public class FlightPathController {
     }
 
 
-    @RequestMapping("/findAll")
-    public ResponseEntity<? extends IValue> all(@RequestParam String from, @RequestParam String to, @RequestParam String leave) {
+    @RequestMapping("/{from}/{to}")
+    public ResponseEntity<? extends IValue> all(@PathVariable("from") String from, @PathVariable("to") String to,
+            @RequestParam String leave) {
         try {
             Calendar calendar = Calendar.getInstance(Locale.US);
             calendar.setTime(DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse(leave));
