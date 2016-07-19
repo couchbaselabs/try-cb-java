@@ -47,6 +47,13 @@
         	<artifactId>spring-security-core</artifactId>
         	<version>4.0.1.RELEASE</version>
         </dependency>
+
+        <!-- json web token support -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.6.0</version>
+        </dependency>
     </dependencies>
 
     <!-- for couchbase prereleases, use the couchbase repo -->

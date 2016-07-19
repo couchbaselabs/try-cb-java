@@ -3,30 +3,42 @@ package trycb.service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import rx.functions.Func1;
+import trycb.model.Result;
 
 @Service
 public class User {
 
+    private final TokenService jwtService;
+
+    @Autowired
+    public User(TokenService jwtService) {
+        this.jwtService = jwtService;
+    }
+
     /**
      * Try to log the given user in.
      */
-    public static Map<String, Object> login(final Bucket bucket, final String username, final String password) {
+    public Map<String, Object> login(final Bucket bucket, final String username, final String password) {
         JsonDocument doc = bucket.get("user::" + username);
 
         if (doc == null) {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
         } else if(BCrypt.checkpw(password, doc.content().getString("password"))) {
-            return doc.content().toMap();
+            return JsonObject.create()
+                .put("token", jwtService.buildToken(username))
+                .toMap();
         } else {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
         }
@@ -35,18 +47,19 @@ public class User {
     /**
      * Create a user.
      */
-    public static Map<String, Object> createLogin(final Bucket bucket, final String username, final String password) {
+    public Map<String, Object> createLogin(final Bucket bucket, final String username, final String password) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
         JsonObject data = JsonObject.create()
             .put("type", "user")
             .put("name", username)
-            .put("password", passHash)
-            .put("token", passHash);
-        JsonDocument doc = JsonDocument.create("user::" + username, data);
+            .put("password", passHash);
+        JsonDocument doc = JsonDocument.create("user::" + username, (int) TimeUnit.HOURS.toSeconds(1), data);
 
         try {
             bucket.insert(doc);
-            return data.toMap();
+            return JsonObject.create()
+                .put("token", jwtService.buildToken(username))
+                .toMap();
         } catch (Exception e) {
             throw new AuthenticationServiceException("There was an error creating account");
         }
@@ -55,7 +68,7 @@ public class User {
     /**
      * Register a flight (or flights) for the given user.
      */
-    public static Map<String, Object> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
+    public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
         JsonDocument userData = bucket.get("user::" + username);
         if (userData == null) {
             throw new IllegalStateException();
@@ -84,7 +97,8 @@ public class User {
 
         JsonObject responseData = JsonObject.create()
             .put("added", added);
-        return responseData.toMap();
+
+        return Result.of(responseData.toMap(), "Booked flight in Couchbase document " + response.id());
     }
 
     private static void checkFlight(Object f) {
@@ -103,7 +117,7 @@ public class User {
     /**
      * Show all booked flights for the given user.
      */
-    public static List<Object> getFlightsForUser(final Bucket bucket, final String username) {
+    public List<Object> getFlightsForUser(final Bucket bucket, final String username) {
         return bucket.async()
                      .get("user::" + username)
                      .map(new Func1<JsonDocument, List<Object>>() {
