@@ -67,9 +67,9 @@ public class UserController {
     public ResponseEntity<? extends IValue> createLogin(@RequestBody String json) {
         JsonObject jsonData = JsonObject.fromJson(json);
         try {
-            Map<String, Object> data = userService.createLogin(bucket, jsonData.getString("user"), jsonData.getString("password"), expiry);
+            Result<Map<String, Object>> result = userService.createLogin(bucket, jsonData.getString("user"), jsonData.getString("password"), expiry);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Result.of(data));
+                    .body(result);
         } catch (AuthenticationServiceException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new Error(e.getMessage()));

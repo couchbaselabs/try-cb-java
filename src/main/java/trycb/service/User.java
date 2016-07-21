@@ -46,7 +46,7 @@ public class User {
     /**
      * Create a user.
      */
-    public Map<String, Object> createLogin(final Bucket bucket, final String username, final String password,
+    public Result<Map<String, Object>> createLogin(final Bucket bucket, final String username, final String password,
             int expiry) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
         JsonObject data = JsonObject.create()
@@ -59,12 +59,14 @@ public class User {
         } else {
             doc = JsonDocument.create("user::" + username, data);
         }
+        String narration = "User account created in document " + doc.id() + " in " + bucket.name()
+                + (doc.expiry() > 0 ? ", with expiry of " + doc.expiry() + "s" : "");
 
         try {
             bucket.insert(doc);
-            return JsonObject.create()
-                .put("token", jwtService.buildToken(username))
-                .toMap();
+            return Result.of(
+                    JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
+                    narration);
         } catch (Exception e) {
             throw new AuthenticationServiceException("There was an error creating account");
         }
