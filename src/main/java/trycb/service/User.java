@@ -3,7 +3,6 @@ package trycb.service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
@@ -47,13 +46,19 @@ public class User {
     /**
      * Create a user.
      */
-    public Map<String, Object> createLogin(final Bucket bucket, final String username, final String password) {
+    public Map<String, Object> createLogin(final Bucket bucket, final String username, final String password,
+            int expiry) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
         JsonObject data = JsonObject.create()
             .put("type", "user")
             .put("name", username)
             .put("password", passHash);
-        JsonDocument doc = JsonDocument.create("user::" + username, (int) TimeUnit.HOURS.toSeconds(1), data);
+        JsonDocument doc;
+        if (expiry > 0) {
+            doc = JsonDocument.create("user::" + username, expiry, data);
+        } else {
+            doc = JsonDocument.create("user::" + username, data);
+        }
 
         try {
             bucket.insert(doc);

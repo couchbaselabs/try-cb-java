@@ -7,6 +7,8 @@ import java.util.Map;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.json.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -31,8 +33,11 @@ public class UserController {
     private final User userService;
     private final TokenService jwtService;
 
+     @Value("${storage.expiry:0}")
+    private int expiry;
+
     @Autowired
-    public UserController(Bucket bucket, User userService, TokenService jwtService) {
+    public UserController(@Qualifier("loginBucket") Bucket bucket, User userService, TokenService jwtService) {
         this.bucket = bucket;
         this.userService = userService;
         this.jwtService = jwtService;
@@ -62,7 +67,7 @@ public class UserController {
     public ResponseEntity<? extends IValue> createLogin(@RequestBody String json) {
         JsonObject jsonData = JsonObject.fromJson(json);
         try {
-            Map<String, Object> data = userService.createLogin(bucket, jsonData.getString("user"), jsonData.getString("password"));
+            Map<String, Object> data = userService.createLogin(bucket, jsonData.getString("user"), jsonData.getString("password"), expiry);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(Result.of(data));
         } catch (AuthenticationServiceException e) {
