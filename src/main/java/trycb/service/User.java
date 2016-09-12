@@ -139,7 +139,7 @@ public class User {
                              }
                          }
                      })
-                     .single()
+                     .defaultIfEmpty(Collections.emptyList())
                      .toBlocking()
                      .single();
     }
