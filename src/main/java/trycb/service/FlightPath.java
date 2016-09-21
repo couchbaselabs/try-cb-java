@@ -10,10 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
+import trycb.model.Result;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static com.couchbase.client.java.query.Select.select;
 import static com.couchbase.client.java.query.dsl.Expression.i;
@@ -28,7 +31,7 @@ public class FlightPath {
     /**
      * Find all flight paths.
      */
-    public static List<Map<String, Object>> findAll(final Bucket bucket, String from, String to, Calendar leave) {
+    public static Result<List<Map<String, Object>>> findAll(final Bucket bucket, String from, String to, Calendar leave) {
         Statement query = select(x("faa").as("fromAirport"))
             .from(i(bucket.name()))
             .where(x("airportname").eq(s(from)))
@@ -65,7 +68,9 @@ public class FlightPath {
         logQuery(joinQuery.toString());
 
         N1qlQueryResult otherResult = bucket.query(joinQuery);
-        return extractResultOrThrow(otherResult);
+
+        List<Map<String, Object>> finalResult = extractResultOrThrow(otherResult);
+        return Result.of(finalResult, query.toString(), joinQuery.toString());
     }
 
     /**
@@ -77,9 +82,13 @@ public class FlightPath {
             throw new DataRetrievalFailureException("Query error: " + result.errors());
         }
 
+        Random rand = new Random();
+
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
         for (N1qlQueryRow row : result) {
-            content.add(row.value().toMap());
+            content.add(row.value()
+                    .put("price", rand.nextInt(2000))
+                    .toMap());
         }
         return content;
     }

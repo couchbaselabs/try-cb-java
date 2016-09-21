@@ -1,19 +1,23 @@
 package trycb.web;
 
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
 import com.couchbase.client.java.Bucket;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import trycb.model.Error;
+import trycb.model.IValue;
 import trycb.service.FlightPath;
-import java.text.DateFormat;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/flightPath")
+@RequestMapping("/api/flightPaths")
 public class FlightPathController {
 
     private final Bucket bucket;
@@ -24,12 +28,17 @@ public class FlightPathController {
     }
 
 
-    @RequestMapping("/findAll")
-    public List<Map<String, Object>> all(@RequestParam String from, @RequestParam String to, @RequestParam String leave)
-        throws Exception {
-        Calendar calendar = Calendar.getInstance(Locale.US);
-        calendar.setTime(DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse(leave));
-        return FlightPath.findAll(bucket, from, to, calendar);
+    @RequestMapping("/{from}/{to}")
+    public ResponseEntity<? extends IValue> all(@PathVariable("from") String from, @PathVariable("to") String to,
+            @RequestParam String leave) {
+        try {
+            Calendar calendar = Calendar.getInstance(Locale.US);
+            calendar.setTime(DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse(leave));
+            return ResponseEntity.ok(FlightPath.findAll(bucket, from, to, calendar));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new Error(e.getMessage()));
+        }
     }
 
 }

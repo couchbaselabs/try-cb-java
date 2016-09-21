@@ -1,106 +1,145 @@
 package trycb.service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.json.JsonArray;
 import com.couchbase.client.java.document.json.JsonObject;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import rx.functions.Func1;
+import trycb.model.Result;
 
 @Service
 public class User {
 
+    private final TokenService jwtService;
+
+    @Autowired
+    public User(TokenService jwtService) {
+        this.jwtService = jwtService;
+    }
+
     /**
      * Try to log the given user in.
      */
-    public static ResponseEntity<String> login(final Bucket bucket, final String username, final String password) {
+    public Map<String, Object> login(final Bucket bucket, final String username, final String password) {
         JsonDocument doc = bucket.get("user::" + username);
 
-        JsonObject responseContent;
         if (doc == null) {
-            responseContent = JsonObject.create().put("success", false).put("failure", "Bad Username or Password");
+            throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
         } else if(BCrypt.checkpw(password, doc.content().getString("password"))) {
-            responseContent = JsonObject.create().put("success", true).put("data", doc.content());
+            return JsonObject.create()
+                .put("token", jwtService.buildToken(username))
+                .toMap();
         } else {
-            responseContent = JsonObject.empty().put("success", false).put("failure", "Bad Username or Password");
+            throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
         }
-        return new ResponseEntity<String>(responseContent.toString(), HttpStatus.OK);
     }
 
     /**
      * Create a user.
      */
-    public static ResponseEntity<String> createLogin(final Bucket bucket, final String username, final String password) {
+    public Result<Map<String, Object>> createLogin(final Bucket bucket, final String username, final String password,
+            int expiry) {
+        String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
         JsonObject data = JsonObject.create()
             .put("type", "user")
             .put("name", username)
-            .put("password", BCrypt.hashpw(password, BCrypt.gensalt()));
-        JsonDocument doc = JsonDocument.create("user::" + username, data);
+            .put("password", passHash);
+        JsonDocument doc;
+        if (expiry > 0) {
+            doc = JsonDocument.create("user::" + username, expiry, data);
+        } else {
+            doc = JsonDocument.create("user::" + username, data);
+        }
+        String narration = "User account created in document " + doc.id() + " in " + bucket.name()
+                + (doc.expiry() > 0 ? ", with expiry of " + doc.expiry() + "s" : "");
 
         try {
             bucket.insert(doc);
-            JsonObject responseData = JsonObject.create()
-                .put("success", true)
-                .put("data", data);
-            return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
+            return Result.of(
+                    JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
+                    narration);
         } catch (Exception e) {
-            JsonObject responseData = JsonObject.empty()
-                .put("success", false)
-                .put("failure", "There was an error creating account")
-                .put("exception", e.getMessage());
-            return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
+            throw new AuthenticationServiceException("There was an error creating account");
         }
     }
 
     /**
      * Register a flight (or flights) for the given user.
      */
-    public static ResponseEntity<String> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
+    public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
         JsonDocument userData = bucket.get("user::" + username);
         if (userData == null) {
-            throw new IllegalStateException("A user needs to be created first.");
+            throw new IllegalStateException();
         }
 
+        if (newFlights == null) {
+            throw new IllegalArgumentException("No flights in payload");
+        }
+
+        JsonArray added = JsonArray.empty();
         JsonArray allBookedFlights = userData.content().getArray("flights");
         if(allBookedFlights == null) {
             allBookedFlights = JsonArray.create();
         }
 
         for (Object newFlight : newFlights) {
-            JsonObject t = ((JsonObject) newFlight).getObject("_data");
-            JsonObject flightJson = JsonObject.empty()
-                .put("name", t.get("name"))
-                .put("flight", t.get("flight"))
-                .put("date", t.get("date"))
-                .put("sourceairport", t.get("sourceairport"))
-                .put("destinationairport", t.get("destinationairport"))
-                .put("bookedon", "");
-            allBookedFlights.add(flightJson);
+            checkFlight(newFlight);
+            JsonObject t = ((JsonObject) newFlight);
+            t.put("bookedon", "try-cb-java");
+            allBookedFlights.add(t);
+            added.add(t);
         }
 
         userData.content().put("flights", allBookedFlights);
         JsonDocument response = bucket.upsert(userData);
+
         JsonObject responseData = JsonObject.create()
-            .put("added", response.content().getArray("flights").size());
-        return new ResponseEntity<String>(responseData.toString(), HttpStatus.OK);
+            .put("added", added);
+
+        return Result.of(responseData.toMap(), "Booked flight in Couchbase document " + response.id());
+    }
+
+    private static void checkFlight(Object f) {
+        if (f == null || !(f instanceof JsonObject)) {
+            throw new IllegalArgumentException("Each flight must be a non-null object");
+        }
+        JsonObject flight = (JsonObject) f;
+        if (!flight.containsKey("name")
+                || !flight.containsKey("date")
+                || !flight.containsKey("sourceairport")
+                || !flight.containsKey("destinationairport")) {
+            throw new IllegalArgumentException("Malformed flight inside flights payload");
+        }
     }
 
     /**
      * Show all booked flights for the given user.
      */
-    public static ResponseEntity<String> getFlightsForUser(final Bucket bucket, final String username) {
+    public List<Object> getFlightsForUser(final Bucket bucket, final String username) {
         return bucket.async()
                      .get("user::" + username)
-                     .map(new Func1<JsonDocument, ResponseEntity<String>>() {
+                     .map(new Func1<JsonDocument, List<Object>>() {
                          @Override
-                         public ResponseEntity<String> call(JsonDocument doc) {
-                             return new ResponseEntity<String>(doc.content().getArray("flights").toString(), HttpStatus.OK);
+                         public List<Object> call(JsonDocument doc) {
+                             JsonObject data = doc.content();
+                             JsonArray flights = data.getArray("flights");
+                             if (flights != null) {
+                                 return flights.toList();
+                             } else {
+                                 return Collections.emptyList();
+                             }
                          }
                      })
-                     .defaultIfEmpty(new ResponseEntity<String>("{failure: 'No flights found'}", HttpStatus.OK))
+                     .defaultIfEmpty(Collections.emptyList())
                      .toBlocking()
                      .single();
     }

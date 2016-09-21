@@ -6,7 +6,7 @@
 
     <groupId>com.couchbase.example</groupId>
     <artifactId>try-cb-java</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>2.0.0</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -21,11 +21,18 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- lombok for leaner POJOs -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.8</version>
+        </dependency>
+
         <!-- the couchbase java sdk -->
         <dependency>
             <groupId>com.couchbase.client</groupId>
             <artifactId>java-client</artifactId>
-            <version>2.2.0</version>
+            <version>2.3.3</version>
         </dependency>
 
         <!-- tx for some data exceptions -->
@@ -39,6 +46,13 @@
         	<groupId>org.springframework.security</groupId>
         	<artifactId>spring-security-core</artifactId>
         	<version>4.0.1.RELEASE</version>
+        </dependency>
+
+        <!-- json web token support -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.6.0</version>
         </dependency>
     </dependencies>
 

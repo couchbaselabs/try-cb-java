@@ -40,12 +40,22 @@ public class Database {
     @Value("${password}")
     private String password;
 
+    @Value("${storage.loginBucket}")
+    private String loginBucket;
+
+    @Value("${storage.loginPassword}")
+    private String loginPassword;
+
     public @Bean Cluster cluster() {
         return CouchbaseCluster.create(hostname);
     }
 
     public @Bean Bucket bucket() {
         return cluster().openBucket(bucket, password);
+    }
+
+    public @Bean Bucket loginBucket() {
+        return cluster().openBucket(loginBucket, loginPassword);
     }
 
 }
