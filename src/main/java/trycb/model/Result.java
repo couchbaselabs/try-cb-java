@@ -1,7 +1,5 @@
 package trycb.model;
 
-import lombok.Data;
-
 /**
  * A standardized result format for successful responses, that the frontend application can interpret
  * for all endpoints. Allows to contain user-facing data and an array of context strings, eg. N1QL
@@ -9,7 +7,6 @@ import lombok.Data;
  *
  * @author Simon Baslé
  */
-@Data
 public class Result<T> implements IValue {
 
     private final T data;
@@ -22,5 +19,13 @@ public class Result<T> implements IValue {
 
     public static <T> Result<T> of(T data, String... contexts) {
         return new Result<T>(data, contexts);
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public String[] getContext() {
+        return context;
     }
 }

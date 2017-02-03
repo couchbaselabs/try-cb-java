@@ -40,7 +40,7 @@ public class Database {
     private String loginPassword;
 
     @Autowired
-    private CouchbaseCluster couchbaseCluster;
+    private Cluster couchbaseCluster;
 
     public @Bean Bucket loginBucket() {
         return couchbaseCluster.openBucket(loginBucket, loginPassword);
