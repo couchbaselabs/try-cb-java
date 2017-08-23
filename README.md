@@ -1,6 +1,6 @@
 # Couchbase Java Travel-Sample Application
 This is a sample application for getting started with Couchbase Server 4.5. The application runs a single page UI for
-demonstrating SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 4.5 
+demonstrating SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 5.0
 together with Spring Boot, Angular2 and Bootstrap.
 
 The application is a flight planner that allows the user to search for and select a flight route (including the
@@ -13,7 +13,7 @@ a previously populated database. An additional page allows users to search for H
 ## Prerequisites
 The following pieces need to be in place in order to run the application.
 
-1. Couchbase Server 4.5 or later with the `travel-sample` bucket.
+1. Couchbase Server 5.0 or later with the `travel-sample` bucket.
 2. Java 6 or later
 3. Maven 3 or later
 
@@ -23,8 +23,7 @@ work with maven-based projects. We recommend running IntelliJ IDEA, but Eclipse 
 Note that the project uses Lombok, so code generation through annotation processing must be enabled.
 
 ## Running the Application
-To download the application you can either download [the archive](https://github.com/couchbaselabs/try-cb-java/archive/2.0.0.zip) or
-clone the repository:
+To download the application you can clone the repository:
 
 ```
 $ git clone https://github.com/couchbaselabs/try-cb-java.git
@@ -99,11 +98,8 @@ can check the command line which prints all the executed N1QL queries:
 ```
 
 ## Custom Options
-By default it will connect to the `travel-sample` bucket on `127.0.0.1`. It will however separate user account data into
-the `default` bucket (and these documents can be set to expire). All these options can be tuned in the
-`src/main/resources/application.properties`. You can also conveniently change those options through the command line at
-bootstrap:
+You can also conveniently change those options through the command line at bootstrap:
 
 ```
-$ mvn spring-boot:run -Dhostname=127.0.0.1 -Dbucket=travel-sample -Dpassword=
+$ mvn spring-boot:run -Dstorage.host=127.0.0.1 -Dstorage.bucket=travel-sample -Dstorage.password=password -Dstorage.username=Administrator
 ```
