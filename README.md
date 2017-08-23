@@ -10,6 +10,10 @@ a previously populated database. An additional page allows users to search for H
 
 ![Application](app.png)
 
+ ## Couchbase Server 5.0
+ -There is a branch for the upcoming Couchbase Server 5.0 that has additional changes: https://github.com/couchbaselabs/try-cb-java/tree/5.0-updates
+ +There is a [5.0-updates](https://github.com/couchbaselabs/try-cb-java/tree/5.0-updates) branch for the upcoming Couchbase Server 5.0 that has additional changes.
+
 ## Prerequisites
 The following pieces need to be in place in order to run the application.
 
