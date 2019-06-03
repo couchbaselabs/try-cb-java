@@ -1,5 +1,5 @@
 # Couchbase Java Travel-Sample Application
-This is a sample application for getting started with Couchbase Server 4.5. The application runs a single page UI for
+This is a sample application for getting started with Couchbase Server 4.5 and later. The application runs a single page UI for
 demonstrating SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 5.0
 together with Spring Boot, Angular2 and Bootstrap.
 
@@ -10,15 +10,11 @@ a previously populated database. An additional page allows users to search for H
 
 ![Application](app.png)
 
- ## Couchbase Server 5.0
- -There is a branch for the upcoming Couchbase Server 5.0 that has additional changes: https://github.com/couchbaselabs/try-cb-java/tree/5.0-updates
- +There is a [5.0-updates](https://github.com/couchbaselabs/try-cb-java/tree/5.0-updates) branch for the upcoming Couchbase Server 5.0 that has additional changes.
-
 ## Prerequisites
 The following pieces need to be in place in order to run the application.
 
 1. Couchbase Server 5.0 or later with the `travel-sample` bucket.
-2. Java 6 or later
+2. Java 7 or later
 3. Maven 3 or later
 
 If you want to run the application from your IDE rather than from the command line you also need your IDE set up to
@@ -46,7 +42,7 @@ $ mvn spring-boot:run
 [INFO] Scanning for projects...
 [INFO]                                                                         
 [INFO] ------------------------------------------------------------------------
-[INFO] Building try-cb-java 2.0.0
+[INFO] Building try-cb-java 2.2.0
 [INFO] ------------------------------------------------------------------------
 [INFO] 
   .   ____          _            __ _ _
@@ -55,7 +51,7 @@ $ mvn spring-boot:run
  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
   '  |____| .__|_| |_|_| |_\__, | / / / /
  =========|_|==============|___/=/_/_/_/
- :: Spring Boot ::        (v1.2.5.RELEASE)
+ :: Spring Boot ::        (v1.5.21.RELEASE)
 
 2016-09-12 14:15:36.438  INFO 64357 --- [lication.main()] trycb.Application                        : Starting Application on SimonBookPro.local with PID 64357 (/Users/edralzar/dev/couchbase/misc/try-cb-java/target/classes started by edralzar in /Users/edralzar/dev/couchbase/misc/try-cb-java)
 2016-09-12 14:15:37.606  INFO 64357 --- [lication.main()] s.b.c.e.t.TomcatEmbeddedServletContainer : Tomcat initialized with port(s): 8080 (http)
