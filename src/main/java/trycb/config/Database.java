@@ -24,7 +24,6 @@ package trycb.config;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.CouchbaseCluster;
-import com.couchbase.client.java.env.DefaultCouchbaseEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,17 +32,26 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class Database {
 
-    @Value("${storage.loginBucket}")
-    private String loginBucket;
+    @Value("${storage.host}")
+    private String host;
 
-    @Value("${storage.loginPassword}")
-    private String loginPassword;
+    @Value("${storage.bucket}")
+    private String bucket;
 
-    @Autowired
-    private Cluster couchbaseCluster;
+    @Value("${storage.username}")
+    private String username;
+
+    @Value("${storage.password}")
+    private String password;
+
+    public @Bean Cluster couchbaseCluster() {
+        CouchbaseCluster cluster = CouchbaseCluster.create(host);
+        cluster.authenticate(username, password);
+        return cluster;
+    }
 
     public @Bean Bucket loginBucket() {
-        return couchbaseCluster.openBucket(loginBucket, loginPassword);
+        return couchbaseCluster().openBucket(bucket);
     }
 
 }
