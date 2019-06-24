@@ -1,25 +1,18 @@
 package trycb.service;
 
-import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.query.N1qlQuery;
-import com.couchbase.client.java.query.N1qlQueryResult;
-import com.couchbase.client.java.query.N1qlQueryRow;
-import com.couchbase.client.java.query.Statement;
-import com.couchbase.client.java.query.dsl.path.AsPath;
+import com.couchbase.client.core.error.QueryServiceException;
+import com.couchbase.client.java.Cluster;
+import com.couchbase.client.java.json.JsonObject;
+import com.couchbase.client.java.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import trycb.model.Result;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import static com.couchbase.client.java.query.Select.select;
-import static com.couchbase.client.java.query.dsl.Expression.i;
-import static com.couchbase.client.java.query.dsl.Expression.s;
-import static com.couchbase.client.java.query.dsl.Expression.x;
 
 @Service
 public class Airport {
@@ -30,38 +23,34 @@ public class Airport {
     /**
      * Find all airports.
      */
-    public static Result<List<Map<String, Object>>> findAll(final Bucket bucket, final String params) {
-        Statement query;
+    public static Result<List<Map<String, Object>>> findAll(final Cluster cluster, final String bucket, final String params) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("select airportname from `").append(bucket).append("` where ");
 
-        AsPath prefix = select("airportname").from(i(bucket.name()));
         if (params.length() == 3) {
-            query = prefix.where(x("faa").eq(s(params.toUpperCase())));
+            builder.append("faa = '").append(params.toUpperCase()).append("'");
         } else if (params.length() == 4 && (params.equals(params.toUpperCase()) || params.equals(params.toLowerCase()))) {
-            query = prefix.where(x("icao").eq(s(params.toUpperCase())));
+            builder.append("icao = '").append(params.toUpperCase()).append("'");
         } else {
-            query = prefix.where(i("airportname").like(s(params + "%")));
+            builder.append("airportname like '").append(params).append("%'");
+        }
+        String query = builder.toString();
+
+        logQuery(query);
+        QueryResult result = null;
+        try {
+            result = cluster.query(query);
+        } catch (QueryServiceException e) {
+            LOGGER.warn("Query failed with exception: " + e);
+            throw new DataRetrievalFailureException("Query error: " + result);
         }
 
-        logQuery(query.toString());
-        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
-        List<Map<String, Object>> data = extractResultOrThrow(result);
-        return Result.of(data, query.toString());
-    }
-
-    /**
-     * Extract a N1Ql result or throw if there is an issue.
-     */
-    private static List<Map<String, Object>> extractResultOrThrow(N1qlQueryResult result) {
-        if (!result.finalSuccess()) {
-            LOGGER.warn("Query returned with errors: " + result.errors());
-            throw new DataRetrievalFailureException("Query error: " + result.errors());
+        List<JsonObject> resultObjects = result.allRowsAsObject();
+        List<Map<String, Object>> data = new LinkedList<Map<String, Object>>();
+        for (JsonObject obj: resultObjects) {
+            data.add(obj.toMap());
         }
-
-        List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        for (N1qlQueryRow row : result) {
-            content.add(row.value().toMap());
-        }
-        return content;
+        return Result.of(data, query);
     }
 
     /**

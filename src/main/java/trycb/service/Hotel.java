@@ -1,25 +1,30 @@
 package trycb.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
-import com.couchbase.client.deps.com.fasterxml.jackson.core.JsonProcessingException;
+import com.couchbase.client.core.deps.com.fasterxml.jackson.core.JsonProcessingException;
 import com.couchbase.client.java.Bucket;
+import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.queries.ConjunctionQuery;
-import com.couchbase.client.java.search.result.SearchQueryResult;
 import com.couchbase.client.java.search.result.SearchQueryRow;
-import com.couchbase.client.java.subdoc.DocumentFragment;
-import com.couchbase.client.java.transcoder.JacksonTransformers;
+import com.couchbase.client.java.search.result.SearchResult;
+import com.couchbase.client.java.json.JacksonTransformers;
+import com.couchbase.client.java.kv.LookupInResult;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import trycb.model.Result;
+
+import static com.couchbase.client.java.kv.LookupInSpec.*;
 
 @Service
 public class Hotel {
@@ -36,7 +41,7 @@ public class Hotel {
     /**
      * Search for a hotel in a particular location.
      */
-    public Result findHotels(final String location, final String description) {
+    public Result findHotels(final Cluster cluster, final String location, final String description) {
         ConjunctionQuery fts = SearchQuery.conjuncts(SearchQuery.term("hotel").field("type"));
 
         if (location != null && !location.isEmpty() && !"*".equals(location)) {
@@ -60,7 +65,7 @@ public class Hotel {
                 .limit(100);
 
         logQuery(query.export().toString());
-        SearchQueryResult result = bucket.query(query);
+        SearchResult result = cluster.searchQuery(query);
 
 
         //prepare the context to send to the app
@@ -71,15 +76,9 @@ public class Hotel {
         } catch (JsonProcessingException e) {
             ftsContext = query.export().toString();
         }
-        String subdocContext = "DocumentFragment<Lookup> fragment = bucket\n" +
-                "                    .lookupIn(row.id())\n" +
-                "                    .get(\"country\")\n" +
-                "                    .get(\"city\")\n" +
-                "                    .get(\"state\")\n" +
-                "                    .get(\"address\")\n" +
-                "                    .get(\"name\")\n" +
-                "                    .get(\"description\")\n" +
-                "                    .execute();";
+        String subdocContext = "        Optional<LookupInResult> lookup = bucket.defaultCollection().lookupIn(row.id(),\n" +
+                "                Arrays.asList(get(\"country\"), get(\"city\"), get(\"state\"), get(\"address\"),\n" +
+                "                        get(\"name\"), get(\"description\")));";
 
         return Result.of(extractResultOrThrow(result), ftsContext, subdocContext);
     }
@@ -87,44 +86,42 @@ public class Hotel {
     /**
      * Search for an hotel.
      */
-    public Result findHotels(final String description) {
-        return findHotels("*", description);
+    public Result findHotels(final Cluster cluster, final String description) {
+        return findHotels(cluster, "*", description);
     }
 
     /**
      * Find all hotels.
      */
-    public Result findAllHotels() {
-        return findHotels("*", "*");
+    public Result findAllHotels(final Cluster cluster) {
+        return findHotels(cluster, "*", "*");
     }
 
     /**
      * Extract a FTS result or throw if there is an issue.
      */
-    private List<Map<String, Object>> extractResultOrThrow(SearchQueryResult result) {
-        if (!result.status().isSuccess()) {
+    private List<Map<String, Object>> extractResultOrThrow(SearchResult result) {
+        if (!result.meta().status().isSuccess()) {
             LOGGER.warn("Query returned with errors: " + result.errors());
             throw new DataRetrievalFailureException("Query error: " + result.errors());
         }
 
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        for (SearchQueryRow row : result) {
-            DocumentFragment<Lookup> fragment = bucket
-                    .lookupIn(row.id())
-                    .get("country")
-                    .get("city")
-                    .get("state")
-                    .get("address")
-                    .get("name")
-                    .get("description")
-                    .execute();
+        for (SearchQueryRow row : result.rows()) {
+            Optional<LookupInResult> lookup = bucket.defaultCollection().lookupIn(row.id(),
+                    Arrays.asList(get("country"), get("city"), get("state"), get("address"),
+                            get("name"), get("description")));
+
+            if (!lookup.isPresent())
+                continue;
+            LookupInResult res = lookup.get();
 
             Map<String, Object> map = new HashMap<String, Object>();
 
-            String country = (String) fragment.content("country");
-            String city = (String) fragment.content("city");
-            String state = (String) fragment.content("state");
-            String address = (String) fragment.content("address");
+            String country = res.contentAs(0, String.class);
+            String city = res.contentAs(1, String.class);
+            String state = res.contentAs(2, String.class);
+            String address = res.contentAs(3, String.class);
 
             StringBuilder fullAddr = new StringBuilder();
             if (address != null)
@@ -139,8 +136,8 @@ public class Hotel {
             if (fullAddr.length() > 2 && fullAddr.charAt(fullAddr.length() - 2) == ',')
                 fullAddr.delete(fullAddr.length() - 2, fullAddr.length() - 1);
 
-            map.put("name", fragment.content("name"));
-            map.put("description", fragment.content("description"));
+            map.put("name", res.contentAs(4, String.class));
+            map.put("description", res.contentAs(5, String.class));
             map.put("address", fullAddr.toString());
 
             content.add(map);

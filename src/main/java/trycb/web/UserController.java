@@ -4,8 +4,9 @@ package trycb.web;
 import java.util.List;
 import java.util.Map;
 
+import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.json.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,7 +68,8 @@ public class UserController {
     public ResponseEntity<? extends IValue> createLogin(@RequestBody String json) {
         JsonObject jsonData = JsonObject.fromJson(json);
         try {
-            Result<Map<String, Object>> result = userService.createLogin(bucket, jsonData.getString("user"), jsonData.getString("password"), expiry);
+            Result<Map<String, Object>> result = userService.createLogin(bucket, jsonData.getString("user"),
+                    jsonData.getString("password"), DurabilityLevel.values()[expiry]);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(result);
         } catch (AuthenticationServiceException e) {

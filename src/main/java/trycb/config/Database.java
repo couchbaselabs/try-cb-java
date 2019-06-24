@@ -23,8 +23,6 @@ package trycb.config;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
-import com.couchbase.client.java.CouchbaseCluster;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,14 +42,12 @@ public class Database {
     @Value("${storage.password}")
     private String password;
 
-    public @Bean Cluster couchbaseCluster() {
-        CouchbaseCluster cluster = CouchbaseCluster.create(host);
-        cluster.authenticate(username, password);
-        return cluster;
+    public @Bean Cluster loginCluster() {
+        return Cluster.connect("localhost", username, password);
     }
 
     public @Bean Bucket loginBucket() {
-        return couchbaseCluster().openBucket(bucket);
+        return loginCluster().bucket(bucket);
     }
 
 }

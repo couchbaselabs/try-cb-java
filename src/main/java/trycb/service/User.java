@@ -3,18 +3,26 @@ package trycb.service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
+import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.document.JsonDocument;
-import com.couchbase.client.java.document.json.JsonArray;
-import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.json.JsonArray;
+import com.couchbase.client.java.json.JsonObject;
+import com.couchbase.client.java.kv.GetResult;
+import com.couchbase.client.java.kv.InsertOptions;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
-import rx.functions.Func1;
 import trycb.model.Result;
+
+import static com.couchbase.client.java.kv.InsertOptions.insertOptions;
+
 
 @Service
 public class User {
@@ -30,11 +38,12 @@ public class User {
      * Try to log the given user in.
      */
     public Map<String, Object> login(final Bucket bucket, final String username, final String password) {
-        JsonDocument doc = bucket.get("user::" + username);
+        Optional<GetResult> doc = bucket.defaultCollection().get("user::" + username);
 
-        if (doc == null) {
+        if (!doc.isPresent())
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
-        } else if(BCrypt.checkpw(password, doc.content().getString("password"))) {
+        JsonObject res = doc.get().contentAsObject();
+        if(BCrypt.checkpw(password, res.getString("password"))) {
             return JsonObject.create()
                 .put("token", jwtService.buildToken(username))
                 .toMap();
@@ -47,23 +56,21 @@ public class User {
      * Create a user.
      */
     public Result<Map<String, Object>> createLogin(final Bucket bucket, final String username, final String password,
-            int expiry) {
+            DurabilityLevel expiry) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
-        JsonObject data = JsonObject.create()
+        JsonObject doc = JsonObject.create()
             .put("type", "user")
             .put("name", username)
             .put("password", passHash);
-        JsonDocument doc;
-        if (expiry > 0) {
-            doc = JsonDocument.create("user::" + username, expiry, data);
-        } else {
-            doc = JsonDocument.create("user::" + username, data);
+        InsertOptions options = insertOptions();
+        if (expiry.ordinal() > 0) {
+            options.durabilityLevel(expiry);
         }
-        String narration = "User account created in document " + doc.id() + " in " + bucket.name()
-                + (doc.expiry() > 0 ? ", with expiry of " + doc.expiry() + "s" : "");
+        String narration = "User account created in document user::" + username + " in " + bucket.name()
+                + (expiry.ordinal() > 0 ? ", with expiry of " + expiry.ordinal() + "s" : "");
 
         try {
-            bucket.insert(doc);
+            bucket.defaultCollection().insert("user::" + username, doc);
             return Result.of(
                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
                     narration);
@@ -76,17 +83,19 @@ public class User {
      * Register a flight (or flights) for the given user.
      */
     public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
-        JsonDocument userData = bucket.get("user::" + username);
-        if (userData == null) {
+        String userId = "user::" + username;
+        Optional<GetResult> userDataFetch = bucket.defaultCollection().get(userId);
+        if (!userDataFetch.isPresent()) {
             throw new IllegalStateException();
         }
+        JsonObject userData = userDataFetch.get().contentAsObject();
 
         if (newFlights == null) {
             throw new IllegalArgumentException("No flights in payload");
         }
 
         JsonArray added = JsonArray.empty();
-        JsonArray allBookedFlights = userData.content().getArray("flights");
+        JsonArray allBookedFlights = userData.getArray("flights");
         if(allBookedFlights == null) {
             allBookedFlights = JsonArray.create();
         }
@@ -99,13 +108,13 @@ public class User {
             added.add(t);
         }
 
-        userData.content().put("flights", allBookedFlights);
-        JsonDocument response = bucket.upsert(userData);
+        userData.put("flights", allBookedFlights);
+        bucket.defaultCollection().upsert(userId, userData);
 
         JsonObject responseData = JsonObject.create()
             .put("added", added);
 
-        return Result.of(responseData.toMap(), "Booked flight in Couchbase document " + response.id());
+        return Result.of(responseData.toMap(), "Booked flight in Couchbase document " + userId);
     }
 
     private static void checkFlight(Object f) {
@@ -125,22 +134,31 @@ public class User {
      * Show all booked flights for the given user.
      */
     public List<Object> getFlightsForUser(final Bucket bucket, final String username) {
-        return bucket.async()
-                     .get("user::" + username)
-                     .map(new Func1<JsonDocument, List<Object>>() {
-                         @Override
-                         public List<Object> call(JsonDocument doc) {
-                             JsonObject data = doc.content();
-                             JsonArray flights = data.getArray("flights");
-                             if (flights != null) {
-                                 return flights.toList();
-                             } else {
-                                 return Collections.emptyList();
+        try {
+            return bucket.defaultCollection()
+                         .async()
+                         .get("user::" + username)
+                         .thenApply(new Function<Optional<GetResult>, List<Object>>() {
+                             @Override
+                             public List<Object> apply(Optional<GetResult> doc) {
+                                 if (!doc.isPresent()) {
+                                     return Collections.emptyList();
+                                 }
+                                 JsonObject data = doc.get().contentAsObject();
+                                 JsonArray flights = data.getArray("flights");
+                                 if (flights != null) {
+                                     return flights.toList();
+                                 } else {
+                                     return Collections.emptyList();
+                                 }
                              }
-                         }
-                     })
-                     .defaultIfEmpty(Collections.emptyList())
-                     .toBlocking()
-                     .single();
+                         })
+                         .get();
+        // FIXME: What is the right thing to do in the event of an exception here?
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Unable to get flights for user " + username, e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException("Unable to get flights for user " + username, e);
+        }
     }
 }

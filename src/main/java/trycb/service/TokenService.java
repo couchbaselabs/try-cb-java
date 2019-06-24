@@ -1,7 +1,7 @@
 package trycb.service;
 
-import com.couchbase.client.deps.io.netty.util.CharsetUtil;
-import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.core.deps.io.netty.util.CharsetUtil;
+import com.couchbase.client.java.json.JsonObject;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
