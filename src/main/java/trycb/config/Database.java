@@ -23,6 +23,8 @@ package trycb.config;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
+import com.couchbase.client.java.Scope;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,12 +44,26 @@ public class Database {
     @Value("${storage.password}")
     private String password;
 
+    @Value("${storage.clientorg.bucket}")
+    private String clientOrgBucket;
+
+    @Value("${storage.clientorg.scope}")
+    private String clientOrgScope;
+
     public @Bean Cluster loginCluster() {
         return Cluster.connect("localhost", username, password);
     }
 
     public @Bean Bucket loginBucket() {
         return loginCluster().bucket(bucket);
+    }
+
+    public Bucket clientOrgBucket() {
+        return loginCluster().bucket(clientOrgBucket);
+    }
+
+    public @Bean Scope clientOrgScope() {
+        return clientOrgBucket().scope(clientOrgScope);
     }
 
 }

@@ -8,7 +8,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
-import com.couchbase.client.java.Bucket;
+import com.couchbase.client.java.Collection;
+import com.couchbase.client.java.Scope;
 import com.couchbase.client.java.json.JsonArray;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.GetResult;
@@ -34,14 +35,17 @@ public class User {
         this.jwtService = jwtService;
     }
 
+    static final String USER_COLLECTION_NAME = "users";
+
     /**
      * Try to log the given user in.
      */
-    public Map<String, Object> login(final Bucket bucket, final String username, final String password) {
-        Optional<GetResult> doc = bucket.defaultCollection().get("user::" + username);
+    public Map<String, Object> login(final Scope scope, final String username, final String password) {
+        Optional<GetResult> doc = scope.collection(USER_COLLECTION_NAME).get("user::" + username);
 
-        if (!doc.isPresent())
+        if (!doc.isPresent()) {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
+        }
         JsonObject res = doc.get().contentAsObject();
         if(BCrypt.checkpw(password, res.getString("password"))) {
             return JsonObject.create()
@@ -55,7 +59,7 @@ public class User {
     /**
      * Create a user.
      */
-    public Result<Map<String, Object>> createLogin(final Bucket bucket, final String username, final String password,
+    public Result<Map<String, Object>> createLogin(final Scope scope, final String username, final String password,
             DurabilityLevel expiry) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
         JsonObject doc = JsonObject.create()
@@ -66,11 +70,12 @@ public class User {
         if (expiry.ordinal() > 0) {
             options.durabilityLevel(expiry);
         }
-        String narration = "User account created in document user::" + username + " in " + bucket.name()
+        String narration = "User account created in document user::" + username + " in bucket " + scope.bucketName()
+                + " scope " + scope.name() + " collection " + USER_COLLECTION_NAME
                 + (expiry.ordinal() > 0 ? ", with expiry of " + expiry.ordinal() + "s" : "");
 
         try {
-            bucket.defaultCollection().insert("user::" + username, doc);
+            scope.collection(USER_COLLECTION_NAME).insert("user::" + username, doc);
             return Result.of(
                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
                     narration);
@@ -82,9 +87,10 @@ public class User {
     /**
      * Register a flight (or flights) for the given user.
      */
-    public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
+    public Result<Map<String, Object>> registerFlightForUser(final Scope scope, final String username, final JsonArray newFlights) {
         String userId = "user::" + username;
-        Optional<GetResult> userDataFetch = bucket.defaultCollection().get(userId);
+        Collection userCollection = scope.collection(USER_COLLECTION_NAME);
+        Optional<GetResult> userDataFetch = userCollection.get(userId);
         if (!userDataFetch.isPresent()) {
             throw new IllegalStateException();
         }
@@ -109,7 +115,7 @@ public class User {
         }
 
         userData.put("flights", allBookedFlights);
-        bucket.defaultCollection().upsert(userId, userData);
+        userCollection.upsert(userId, userData);
 
         JsonObject responseData = JsonObject.create()
             .put("added", added);
@@ -133,9 +139,9 @@ public class User {
     /**
      * Show all booked flights for the given user.
      */
-    public List<Object> getFlightsForUser(final Bucket bucket, final String username) {
+    public List<Object> getFlightsForUser(final Scope scope, final String username) {
         try {
-            return bucket.defaultCollection()
+            return scope.collection(USER_COLLECTION_NAME)
                          .async()
                          .get("user::" + username)
                          .thenApply(new Function<Optional<GetResult>, List<Object>>() {
