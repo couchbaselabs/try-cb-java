@@ -1,9 +1,11 @@
 package trycb.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
@@ -15,6 +17,8 @@ import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.GetResult;
 import com.couchbase.client.java.kv.InsertOptions;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -35,13 +39,16 @@ public class User {
         this.jwtService = jwtService;
     }
 
-    static final String USER_COLLECTION_NAME = "users";
+    private static final Logger LOGGER = LoggerFactory.getLogger(User.class);
+
+    static final String USERS_COLLECTION_NAME = "users";
+    static final String FLIGHTS_COLLECTION_NAME = "flights";
 
     /**
      * Try to log the given user in.
      */
     public Map<String, Object> login(final Scope scope, final String username, final String password) {
-        Optional<GetResult> doc = scope.collection(USER_COLLECTION_NAME).get("user::" + username);
+        Optional<GetResult> doc = scope.collection(USERS_COLLECTION_NAME).get("user::" + username);
 
         if (!doc.isPresent()) {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
@@ -71,11 +78,11 @@ public class User {
             options.durabilityLevel(expiry);
         }
         String narration = "User account created in document user::" + username + " in bucket " + scope.bucketName()
-                + " scope " + scope.name() + " collection " + USER_COLLECTION_NAME
+                + " scope " + scope.name() + " collection " + USERS_COLLECTION_NAME
                 + (expiry.ordinal() > 0 ? ", with expiry of " + expiry.ordinal() + "s" : "");
 
         try {
-            scope.collection(USER_COLLECTION_NAME).insert("user::" + username, doc);
+            scope.collection(USERS_COLLECTION_NAME).insert("user::" + username, doc);
             return Result.of(
                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
                     narration);
@@ -89,8 +96,9 @@ public class User {
      */
     public Result<Map<String, Object>> registerFlightForUser(final Scope scope, final String username, final JsonArray newFlights) {
         String userId = "user::" + username;
-        Collection userCollection = scope.collection(USER_COLLECTION_NAME);
-        Optional<GetResult> userDataFetch = userCollection.get(userId);
+        Collection usersCollection = scope.collection(USERS_COLLECTION_NAME);
+        Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
+        Optional<GetResult> userDataFetch = usersCollection.get(userId);
         if (!userDataFetch.isPresent()) {
             throw new IllegalStateException();
         }
@@ -110,12 +118,14 @@ public class User {
             checkFlight(newFlight);
             JsonObject t = ((JsonObject) newFlight);
             t.put("bookedon", "try-cb-java");
-            allBookedFlights.add(t);
+            String flightId = "flight::" + UUID.randomUUID().toString();
+            flightsCollection.insert(flightId, t);
+            allBookedFlights.add(flightId);
             added.add(t);
         }
 
         userData.put("flights", allBookedFlights);
-        userCollection.upsert(userId, userData);
+        usersCollection.upsert(userId, userData);
 
         JsonObject responseData = JsonObject.create()
             .put("added", added);
@@ -139,32 +149,78 @@ public class User {
     /**
      * Show all booked flights for the given user.
      */
-    public List<Object> getFlightsForUser(final Scope scope, final String username) {
+    
+    // Getting the flights this way does not work. An exception is thrown.
+    // FIXME: Make this work, and use it instead of the synchronous method, below.
+    public List<Object> getFlightsForUserAsync(final Scope scope, final String username) {
+        LOGGER.warn("starting getFlightsForUser");
         try {
-            return scope.collection(USER_COLLECTION_NAME)
+            return scope.collection(USERS_COLLECTION_NAME)
                          .async()
                          .get("user::" + username)
                          .thenApply(new Function<Optional<GetResult>, List<Object>>() {
                              @Override
                              public List<Object> apply(Optional<GetResult> doc) {
+                                 LOGGER.warn("trying to get flights");
                                  if (!doc.isPresent()) {
                                      return Collections.emptyList();
                                  }
                                  JsonObject data = doc.get().contentAsObject();
                                  JsonArray flights = data.getArray("flights");
-                                 if (flights != null) {
-                                     return flights.toList();
-                                 } else {
+                                 if (flights == null) {
                                      return Collections.emptyList();
                                  }
+                                 // The "flights" array contains flight ids. Convert them to actual objects.
+                                 Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
+                                 JsonArray results = JsonArray.create();
+                                 for (int i = 0; i < flights.size(); i++) {
+                                     String flightId = flights.getString(i);
+                                     LOGGER.warn("trying to retrieve record " + flightId + " from collection " + flightsCollection.name() + " in scope " + flightsCollection.scopeName());
+                                     Optional<GetResult> res = flightsCollection.get(flightId);
+                                     if (!res.isPresent()) {
+                                         LOGGER.warn("Unable to retrieve flight id " + flightId);
+                                         continue;
+                                     }
+                                     JsonObject flight = res.get().contentAsObject();
+                                     LOGGER.warn("retrieved flight " + flightId + " contents: " + flight.toString());
+                                     results.add(flight);
+                                 }
+                                 return results.toList();
                              }
                          })
                          .get();
-        // FIXME: What is the right thing to do in the event of an exception here?
         } catch (InterruptedException e) {
             throw new RuntimeException("Unable to get flights for user " + username, e);
         } catch (ExecutionException e) {
             throw new RuntimeException("Unable to get flights for user " + username, e);
         }
     }
+
+    public List<Object> getFlightsForUser(final Scope scope, final String username) {
+        Collection users = scope.collection(USERS_COLLECTION_NAME);
+        Optional<GetResult> doc = users.get("user::" + username);
+        if (!doc.isPresent()) {
+            return Collections.emptyList();
+        }
+        JsonObject data = doc.get().contentAsObject();
+        JsonArray flights = data.getArray("flights");
+        if (flights == null) {
+            return Collections.emptyList();
+        }
+
+        // The "flights" array contains flight ids. Convert them to actual objects.
+        Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
+        JsonArray results = JsonArray.create();
+        for (int i = 0; i < flights.size(); i++) {
+            String flightId = flights.getString(i);
+            Optional<GetResult> res = flightsCollection.get(flightId);
+            if (!res.isPresent()) {
+                throw new RuntimeException("Unable to retrieve flight id " + flightId);
+            }
+            JsonObject flight = res.get().contentAsObject();
+            results.add(flight);
+        }
+        return results.toList();
+    }
+
 }
