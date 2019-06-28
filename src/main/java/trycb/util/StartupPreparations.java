@@ -82,7 +82,7 @@ public class StartupPreparations implements InitializingBean {
         for (N1qlQueryRow indexRow : indexResult) {
             String name = indexRow.value().getString("name");
             Boolean isPrimary = indexRow.value().getBoolean("is_primary");
-            if (name.equals(PRIMARY_NAME) || isPrimary == Boolean.TRUE) {
+            if (name.equals(PRIMARY_NAME) || Boolean.TRUE.equals(isPrimary)) {
                 hasPrimary = true;
             } else {
                 foundIndexes.add(name);

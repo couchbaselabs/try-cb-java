@@ -1,6 +1,5 @@
 package trycb.service;
 
-import com.couchbase.client.deps.io.netty.util.CharsetUtil;
 import com.couchbase.client.java.document.json.JsonObject;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -8,6 +7,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Service
 public class TokenService {
@@ -51,7 +52,7 @@ public class TokenService {
 
     private String verifySimple(String token) {
         try {
-            return new String(Base64Utils.decodeFromString(token));
+            return new String(Base64Utils.decodeFromString(token), UTF_8);
         } catch (Exception e) {
             throw new IllegalStateException("Could not verify simple token", e);
         }
@@ -75,6 +76,6 @@ public class TokenService {
     }
 
     private String buildSimpleToken(String username) {
-        return Base64Utils.encodeToString(username.getBytes(CharsetUtil.UTF_8));
+        return Base64Utils.encodeToString(username.getBytes(UTF_8));
     }
 }
