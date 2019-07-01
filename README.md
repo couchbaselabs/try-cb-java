@@ -1,6 +1,6 @@
 # Couchbase Java Travel-Sample Application
-This is a sample application for getting started with Couchbase Server 6.5 and later. The application runs a single page UI for
-demonstrating SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 6.5.0
+This is a sample application for getting started with Couchbase Server 6.5. The application runs a single page UI
+and demonstrates SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 6.5.0
 together with Spring Boot, Angular2 and Bootstrap.
 
 The application is a flight planner that allows the user to search for and select a flight route (including the
@@ -40,7 +40,7 @@ couchbase-cli enable-developer-preview --enable -c http://localhost:8091 -u Admi
 ```
 
 The tool `couchbase-cli` is located in
-(the standard Couchbase installation directory)[https://developer.couchbase.com/documentation/server/3.x/admin/Misc/install-location.html]
+[the standard Couchbase installation directory](https://developer.couchbase.com/documentation/server/3.x/admin/Misc/install-location.html)
 of your OS.
 
 To download the application you can clone the repository:
@@ -60,7 +60,7 @@ Run the creation script like this:
 
 ```
 sh create-collections.sh
-``
+```
 
 This script creates a bucket, a scope, and two collections with this structure:
 
@@ -145,4 +145,3 @@ You can also conveniently change them through the command line at startup.
 ```
 $ mvn spring-boot:run -Dstorage.host=127.0.0.1 -Dstorage.bucket=travel-sample -Dstorage.password=password -Dstorage.username=Administrator
 ```
-
