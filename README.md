@@ -1,10 +1,10 @@
 # Couchbase Java Travel-Sample Application
-This is a sample application for getting started with Couchbase Server 4.5 and later. The application runs a single page UI for
-demonstrating SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 5.0
+This is a sample application for getting started with Couchbase Server 6.5 and later. The application runs a single page UI for
+demonstrating SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 6.5.0
 together with Spring Boot, Angular2 and Bootstrap.
 
 The application is a flight planner that allows the user to search for and select a flight route (including the
-return flight) based on airports and dates. Airport selection is done dynamically using an angular autocomplete box
+return flight) based on airports and dates. Airport selection is done dynamically using an Angular autocomplete box
 bound to N1QL queries on the server side. After selecting a date, it then searches for applicable air flight routes from
 a previously populated database. An additional page allows users to search for Hotels using less structured keywords.
 
@@ -13,8 +13,8 @@ a previously populated database. An additional page allows users to search for H
 ## Prerequisites
 The following pieces need to be in place in order to run the application.
 
-1. Couchbase Server 5.0 or later with the `travel-sample` bucket.
-2. Java 7 or later
+1. Couchbase Server 6.5.0
+2. Java 8 or later
 3. Maven 3 or later
 
 If you want to run the application from your IDE rather than from the command line you also need your IDE set up to
@@ -23,13 +23,54 @@ work with maven-based projects. We recommend running IntelliJ IDEA, but Eclipse 
 Note that the project uses Lombok, so code generation through annotation processing must be enabled.
 
 ## Running the Application
+To run the application, you find need to install Couchbase. You will need at least version 6.5.0.
+The 6.5.0 BETA is sufficient.
+
+Once you have installed Couchbase, you will need to enable the travel-sample bucket.
+You can do this from the Settings/Sample Buckets tab.
+
+You also need to create a text search index, to allow the application to search for hotels.
+In the Search tab, create an index for the travel-sample bucket named "hotels" with a type mapping for type "hotel".
+Leave all other properties of the index at defaults. Wait for the "indexing progress" to reach 100%.
+
+Then you need to enable the DP features, since the application will be working with collections.
+
+```
+couchbase-cli enable-developer-preview --enable -c http://localhost:8091 -u Administrator -p password
+```
+
+The tool `couchbase-cli` is located in
+(the standard Couchbase installation directory)[https://developer.couchbase.com/documentation/server/3.x/admin/Misc/install-location.html]
+of your OS.
+
 To download the application you can clone the repository:
 
 ```
-$ git clone https://github.com/couchbaselabs/try-cb-java.git
+git clone https://github.com/couchbaselabs/try-cb-java.git
 ```
 
-Now change into the directory (`$ cd try-cb-java`) and then run the following maven command.
+Now change into the `try-cb-java` directory.
+Before proceeding, have a look at the application properties file, at `src/main/resources/application.properties`.
+This file controls where and how the application will run. Note, in particular, the `storage.username` and
+`storage.password` settings. If these are not the name and password of the Administrator account on your system,
+change them now.
+
+Next, we need to set up the bucket, scope, and collections where the application will store its data.
+Run the creation script like this:
+
+```
+sh create-collections.sh
+``
+
+This script creates a bucket, a scope, and two collections with this structure:
+
+* default (bucket)
+..* larson-travel (scope)
+....* users (collection)
+....* flights (collection)
+
+
+Then start up the application using Maven and Spring Boot.
 
 ```
 mvn spring-boot:run
@@ -98,8 +139,10 @@ can check the command line which prints all the executed N1QL queries:
 ```
 
 ## Custom Options
-You can also conveniently change those options through the command line at bootstrap:
+Remember the control values we looked at in the application.properties file?
+You can also conveniently change them through the command line at startup.
 
 ```
 $ mvn spring-boot:run -Dstorage.host=127.0.0.1 -Dstorage.bucket=travel-sample -Dstorage.password=password -Dstorage.username=Administrator
 ```
+
