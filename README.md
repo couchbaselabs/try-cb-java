@@ -65,10 +65,9 @@ sh create-collections.sh
 This script creates a bucket, a scope, and two collections with this structure:
 
 * default (bucket)
-..* larson-travel (scope)
-....* users (collection)
-....* flights (collection)
-
+  * larson-travel (scope)
+    * users (collection)
+    * flights (collection)
 
 Then start up the application using Maven and Spring Boot.
 
