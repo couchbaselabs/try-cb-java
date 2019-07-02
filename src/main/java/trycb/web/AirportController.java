@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.couchbase.client.java.Bucket;
+import com.couchbase.client.java.Cluster;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,16 +21,18 @@ import trycb.service.Airport;
 public class AirportController {
 
     private final Bucket bucket;
+    private final Cluster cluster;
 
     @Autowired
-    public AirportController(Bucket bucket) {
+    public AirportController(Cluster cluster, Bucket bucket) {
+        this.cluster = cluster;
         this.bucket = bucket;
     }
 
     @RequestMapping
     public ResponseEntity<? extends IValue> airports(@RequestParam("search") String search) {
         try {
-            Result<List<Map<String, Object>>> result = Airport.findAll(bucket, search);
+            Result<List<Map<String, Object>>> result = Airport.findAll(cluster, bucket, search);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

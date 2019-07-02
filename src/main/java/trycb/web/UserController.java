@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.document.json.JsonObject;
+//import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.json.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -111,7 +112,8 @@ public class UserController {
         try {
             jwtService.verifyAuthenticationHeader(authentication, username);
 
-            List<Object> flights = userService.getFlightsForUser(bucket, username);
+            //List<Object> flights = userService.getFlightsForUser(bucket, username);
+            Object flights = userService.getFlightsForUser(bucket, username);
             return ResponseEntity.ok(Result.of(flights));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

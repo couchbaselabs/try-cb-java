@@ -1,0 +1,923 @@
+diff --git a/pom.xml b/pom.xml
+index 9a998c2..3481a4a 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -11,7 +11,7 @@
+     <parent>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-parent</artifactId>
+-        <version>1.5.21.RELEASE</version>
++        <version>2.1.6.RELEASE</version>
+     </parent>
+ 
+     <dependencies>
+@@ -25,7 +25,7 @@
+         <dependency>
+             <groupId>com.couchbase.client</groupId>
+             <artifactId>java-client</artifactId>
+-            <version>2.7.6</version>
++            <version>3.0.0-alpha.4</version>
+         </dependency>
+ 
+         <!-- tx for some data exceptions -->
+@@ -47,6 +47,22 @@
+             <artifactId>jjwt</artifactId>
+             <version>0.6.0</version>
+         </dependency>
++
++        <dependency>
++            <groupId>javax.xml.bind</groupId>
++            <artifactId>jaxb-api</artifactId>
++            <version>2.3.0</version>
++        </dependency>
++        <dependency>
++            <groupId>com.sun.xml.bind</groupId>
++            <artifactId>jaxb-core</artifactId>
++            <version>2.3.0</version>
++        </dependency>
++        <dependency>
++            <groupId>com.sun.xml.bind</groupId>
++            <artifactId>jaxb-impl</artifactId>
++            <version>2.3.0</version>
++        </dependency>
+     </dependencies>
+ 
+     <!-- for couchbase prereleases, use the couchbase repo -->
+diff --git a/public/main.bundle.js b/public/main.bundle.js
+index 8920e9e..77c45fd 100644
+--- a/public/main.bundle.js
++++ b/public/main.bundle.js
+@@ -8448,25 +8448,25 @@ exports.ArrayObservable = ArrayObservable;
+ /* 63 */
+ /***/ function(module, exports) {
+ 
+-var g;
+-
+-// This works in non-strict mode
+-g = (function() { return this; })();
+-
+-try {
+-	// This works if eval is allowed (see CSP)
+-	g = g || Function("return this")() || (1,eval)("this");
+-} catch(e) {
+-	// This works if the window reference is available
+-	if(typeof window === "object")
+-		g = window;
+-}
+-
+-// g can still be undefined, but nothing to do about it...
+-// We return undefined, instead of nothing here, so it's
+-// easier to handle this case. if(!global) { ...}
+-
+-module.exports = g;
++var g;
++
++// This works in non-strict mode
++g = (function() { return this; })();
++
++try {
++	// This works if eval is allowed (see CSP)
++	g = g || Function("return this")() || (1,eval)("this");
++} catch(e) {
++	// This works if the window reference is available
++	if(typeof window === "object")
++		g = window;
++}
++
++// g can still be undefined, but nothing to do about it...
++// We return undefined, instead of nothing here, so it's
++// easier to handle this case. if(!global) { ...}
++
++module.exports = g;
+ 
+ 
+ /***/ },
+@@ -78224,7 +78224,7 @@ module.exports = "<div>\n<div class=\"panel panel-default\">\n    <div class=\"p
+ /* 791 */
+ /***/ function(module, exports) {
+ 
+-module.exports = "<div class=\"container\">\n    <div class=\"row\">\n        <app-narration></app-narration>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-md-12\">\n            <div class=\"panel panel-default\">\n                <div class=\"panel-heading\" [hidden]=\"!authService.isAuthenticated()\" >\n                    <div class=\"container-fluid panel-container\">\n                        <div class=\"col-xs-6 text-left\">\n                            <div class=\"row\">\n                                <div class=\"col-xs-12\">\n                                    <img src=\"assets/CBTravel.LOGO.png\">\n                                </div>\n                            </div>\n                            <div class=\"row\">\n                                <div class=\"col-xs-12\">\n                                    <small [hidden]=\"!authService.isAuthenticated()\"><strong></strong></small>\n                                </div>\n                            </div>\n                        </div>\n                        <app-navbar></app-navbar>\n                    </div>\n                </div>\n                <div class=\"panel-body\">\n                  <router-outlet></router-outlet>\n                </div>\n                <div class=\"panel-footer panel-default clearfix\"><div class=\"row pull-right\">\n                    <img src=\"assets/poweredBy.01.png\"/>\n                    <code>try-cb-frontend</code> version <code>2.0.0</code></div>\n                </div>\n            </div>\n        </div>\n        <div class=\"col-md-4\"></div>\n    </div>\n  </div>\n"
++module.exports = "<div class=\"container\">\n    <div class=\"row\">\n        <app-narration></app-narration>\n    </div>\n    <div class=\"row\">\n        <div class=\"col-md-12\">\n            <div class=\"panel panel-default\">\n                <div class=\"panel-heading\" [hidden]=\"!authService.isAuthenticated()\" >\n                    <div class=\"container-fluid panel-container\">\n                        <div class=\"col-xs-6 text-left\">\n                            <div class=\"row\">\n                                <div class=\"col-xs-12\">\n                                    <img src=\"assets/CBTravel.LOGO.png\">\n                                </div>\n                            </div>\n                            <div class=\"row\">\n                                <div class=\"col-xs-12\">\n                                    <small [hidden]=\"!authService.isAuthenticated()\"><strong></strong></small>\n                                </div>\n                            </div>\n                        </div>\n                        <app-navbar></app-navbar>\n                    </div>\n                </div>\n                <div class=\"panel-body\">\n                  <router-outlet></router-outlet>\n                </div>\n                <div class=\"panel-footer panel-default clearfix\"><div class=\"row pull-right\">\n                    <img src=\"assets/poweredBy.01.png\"/>\n                    <code>try-cb-frontend</code> version <code>3.0.0</code></div>\n                </div>\n            </div>\n        </div>\n        <div class=\"col-md-4\"></div>\n    </div>\n  </div>\n"
+ 
+ /***/ },
+ /* 792 */
+@@ -90753,26 +90753,26 @@ exports.toSubscriber = toSubscriber;
+ /* 1062 */
+ /***/ function(module, exports) {
+ 
+-module.exports = function(module) {
+-	if(!module.webpackPolyfill) {
+-		module.deprecate = function() {};
+-		module.paths = [];
+-		// module.parent = undefined by default
+-		if(!module.children) module.children = [];
+-		Object.defineProperty(module, "loaded", {
+-			enumerable: true,
+-			configurable: false,
+-			get: function() { return module.l; }
+-		});
+-		Object.defineProperty(module, "id", {
+-			enumerable: true,
+-			configurable: false,
+-			get: function() { return module.i; }
+-		});
+-		module.webpackPolyfill = 1;
+-	}
+-	return module;
+-}
++module.exports = function(module) {
++	if(!module.webpackPolyfill) {
++		module.deprecate = function() {};
++		module.paths = [];
++		// module.parent = undefined by default
++		if(!module.children) module.children = [];
++		Object.defineProperty(module, "loaded", {
++			enumerable: true,
++			configurable: false,
++			get: function() { return module.l; }
++		});
++		Object.defineProperty(module, "id", {
++			enumerable: true,
++			configurable: false,
++			get: function() { return module.i; }
++		});
++		module.webpackPolyfill = 1;
++	}
++	return module;
++}
+ 
+ 
+ /***/ },
+diff --git a/src/main/java/trycb/config/Database.java b/src/main/java/trycb/config/Database.java
+index 5493cc1..2a039e6 100644
+--- a/src/main/java/trycb/config/Database.java
++++ b/src/main/java/trycb/config/Database.java
+@@ -23,7 +23,9 @@ package trycb.config;
+ 
+ import com.couchbase.client.java.Bucket;
+ import com.couchbase.client.java.Cluster;
+-import com.couchbase.client.java.CouchbaseCluster;
++import com.couchbase.client.java.Collection;
++//import com.couchbase.client.java.CouchbaseCluster;
++import com.couchbase.client.java.Collection;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.context.annotation.Bean;
+@@ -45,13 +47,20 @@ public class Database {
+     private String password;
+ 
+     public @Bean Cluster couchbaseCluster() {
+-        CouchbaseCluster cluster = CouchbaseCluster.create(host);
+-        cluster.authenticate(username, password);
++        //CouchbaseCluster cluster = CouchbaseCluster.create(host);
++        Cluster cluster = Cluster.connect(host, username, password);
++        //cluster.authenticate(username, password);
+         return cluster;
+     }
+ 
+     public @Bean Bucket loginBucket() {
+-        return couchbaseCluster().openBucket(bucket);
++        //return couchbaseCluster().openBucket(bucket);
++        return couchbaseCluster().bucket(bucket);
++    }
++
++    public @Bean Collection loginCollection() {
++        //return couchbaseCluster().openBucket(bucket);
++        return couchbaseCluster().bucket((bucket)).defaultCollection();
+     }
+ 
+ }
+diff --git a/src/main/java/trycb/service/Airport.java b/src/main/java/trycb/service/Airport.java
+index a33f6fa..63a4e51 100644
+--- a/src/main/java/trycb/service/Airport.java
++++ b/src/main/java/trycb/service/Airport.java
+@@ -1,11 +1,10 @@
+ package trycb.service;
+ 
+ import com.couchbase.client.java.Bucket;
+-import com.couchbase.client.java.query.N1qlQuery;
+-import com.couchbase.client.java.query.N1qlQueryResult;
+-import com.couchbase.client.java.query.N1qlQueryRow;
+-import com.couchbase.client.java.query.Statement;
+-import com.couchbase.client.java.query.dsl.path.AsPath;
++import com.couchbase.client.java.Cluster;
++import com.couchbase.client.java.json.JsonObject;
++import com.couchbase.client.java.query.QueryResult;
++import com.couchbase.client.java.query.QueryStatus;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.dao.DataRetrievalFailureException;
+@@ -16,11 +15,6 @@ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
+ 
+-import static com.couchbase.client.java.query.Select.select;
+-import static com.couchbase.client.java.query.dsl.Expression.i;
+-import static com.couchbase.client.java.query.dsl.Expression.s;
+-import static com.couchbase.client.java.query.dsl.Expression.x;
+-
+ @Service
+ public class Airport {
+ 
+@@ -30,36 +24,37 @@ public class Airport {
+     /**
+      * Find all airports.
+      */
+-    public static Result<List<Map<String, Object>>> findAll(final Bucket bucket, final String params) {
+-        Statement query;
++    public static Result<List<Map<String, Object>>> findAll(final Cluster cluster, final Bucket bucket, final String params) {
++        //Statement query;
++        String query;
+ 
+-        AsPath prefix = select("airportname").from(i(bucket.name()));
++        String prefix = "SELECT airportname FROM `" + bucket.name() + "` ";
+         if (params.length() == 3) {
+-            query = prefix.where(x("faa").eq(s(params.toUpperCase())));
++            query = prefix + " WHERE faa = \"" + params.toUpperCase() + "\"";
+         } else if (params.length() == 4 && (params.equals(params.toUpperCase()) || params.equals(params.toLowerCase()))) {
+-            query = prefix.where(x("icao").eq(s(params.toUpperCase())));
++            query = prefix + " WHERE icao = \"" + params.toUpperCase() + "\"";
+         } else {
+-            query = prefix.where(i("airportname").like(s(params + "%")));
++            query = prefix + " WHERE faa LIKE \"" + params + "%\"";
+         }
+ 
+-        logQuery(query.toString());
+-        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
++        logQuery(query);
++        QueryResult result = cluster.query(query);
+         List<Map<String, Object>> data = extractResultOrThrow(result);
+-        return Result.of(data, query.toString());
++        return Result.of(data, query);
+     }
+ 
+     /**
+      * Extract a N1Ql result or throw if there is an issue.
+      */
+-    private static List<Map<String, Object>> extractResultOrThrow(N1qlQueryResult result) {
+-        if (!result.finalSuccess()) {
+-            LOGGER.warn("Query returned with errors: " + result.errors());
+-            throw new DataRetrievalFailureException("Query error: " + result.errors());
++    private static List<Map<String, Object>> extractResultOrThrow(QueryResult result) {
++        if (!result.meta().status().equals(QueryStatus.SUCCESS)) {
++            LOGGER.warn("Query returned with errors: " + result.meta().status());
++            throw new DataRetrievalFailureException("Query error: " + result.meta().status());
+         }
+ 
+         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
+-        for (N1qlQueryRow row : result) {
+-            content.add(row.value().toMap());
++        for (JsonObject row : result.allRowsAsObject()) {
++            content.add(row.toMap());
+         }
+         return content;
+     }
+diff --git a/src/main/java/trycb/service/FlightPath.java b/src/main/java/trycb/service/FlightPath.java
+index 51cf826..50e37a4 100644
+--- a/src/main/java/trycb/service/FlightPath.java
++++ b/src/main/java/trycb/service/FlightPath.java
+@@ -1,28 +1,21 @@
+ package trycb.service;
+ 
++import com.couchbase.client.java.Cluster;
++import com.couchbase.client.java.json.JsonObject;
++import com.couchbase.client.java.query.QueryResult;
+ import com.couchbase.client.java.Bucket;
+-import com.couchbase.client.java.query.N1qlQuery;
+-import com.couchbase.client.java.query.N1qlQueryResult;
+-import com.couchbase.client.java.query.N1qlQueryRow;
+-import com.couchbase.client.java.query.Statement;
+-import com.couchbase.client.java.query.dsl.Sort;
++import com.couchbase.client.java.query.QueryStatus;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.dao.DataRetrievalFailureException;
+ import org.springframework.stereotype.Service;
+ import trycb.model.Result;
+-
+ import java.util.ArrayList;
+ import java.util.Calendar;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Random;
+ 
+-import static com.couchbase.client.java.query.Select.select;
+-import static com.couchbase.client.java.query.dsl.Expression.i;
+-import static com.couchbase.client.java.query.dsl.Expression.s;
+-import static com.couchbase.client.java.query.dsl.Expression.x;
+-
+ @Service
+ public class FlightPath {
+ 
+@@ -31,62 +24,57 @@ public class FlightPath {
+     /**
+      * Find all flight paths.
+      */
+-    public static Result<List<Map<String, Object>>> findAll(final Bucket bucket, String from, String to, Calendar leave) {
+-        Statement query = select(x("faa").as("fromAirport"))
+-            .from(i(bucket.name()))
+-            .where(x("airportname").eq(s(from)))
+-            .union()
+-            .select(x("faa").as("toAirport"))
+-            .from(i(bucket.name()))
+-            .where(x("airportname").eq(s(to)));
+-
+-        logQuery(query.toString());
+-        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
+-
+-        if (!result.finalSuccess()) {
+-            LOGGER.warn("Query returned with errors: " + result.errors());
+-            throw new DataRetrievalFailureException("Query error: " + result.errors());
++    public static Result<List<Map<String, Object>>> findAll(final Cluster cluster, Bucket bucket, String from, String to, Calendar leave) {
++        String query = "SELECT faa AS fromAirport FROM `" + bucket.name() + "` WHERE airportname = \"" + from + "\" UNION " +
++                "SELECT faa AS toAirport FROM `" + bucket.name() + "` WHERE airportname = \"" + to + "\"";
++        logQuery(query);
++        QueryResult result = cluster.query(query);
++        List<JsonObject> results = result.allRowsAsObject();
++
++        if (!result.meta().status().equals(QueryStatus.SUCCESS)){
++            LOGGER.warn("Query returned with errors: " + result.meta().status());
++            throw new DataRetrievalFailureException("Query error: " + result.meta().status());
+         }
+ 
+         String fromAirport = null;
+         String toAirport = null;
+-        for (N1qlQueryRow row : result) {
+-            if (row.value().containsKey("fromAirport")) {
+-                fromAirport = row.value().getString("fromAirport");
++
++        for (JsonObject row : results) {
++            if (row.containsKey("fromAirport")) {
++                fromAirport = row.getString("fromAirport");
+             }
+-            if (row.value().containsKey("toAirport")) {
+-                toAirport = row.value().getString("toAirport");
++            if (row.containsKey("toAirport")) {
++                toAirport = row.getString("toAirport");
+             }
+         }
+ 
+-        Statement joinQuery = select("a.name", "s.flight", "s.utc", "r.sourceairport", "r.destinationairport", "r.equipment")
+-            .from(i(bucket.name()).as("r"))
+-            .unnest("r.schedule AS s")
+-            .join(i(bucket.name()).as("a") + " ON KEYS r.airlineid")
+-            .where(x("r.sourceairport").eq(s(fromAirport)).and(x("r.destinationairport").eq(s(toAirport))).and(x("s.day").eq(leave.get(Calendar.DAY_OF_WEEK))))
+-            .orderBy(Sort.asc("a.name"));
+-        logQuery(joinQuery.toString());
++        String joinQuery = "SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment FROM `" +
++                bucket.name() + "` AS r UNNEST r.schedule AS s JOIN `" + bucket.name() + "` AS a ON KEYS r.airlineid WHERE " +
++                "r.sourceairport = \"" + fromAirport + "\" AND r.destinationairport = \"" + toAirport + "\" AND s.day = " +
++                leave.get(Calendar.DAY_OF_WEEK) + " ORDER BY a.name";
++        logQuery(joinQuery);
+ 
+-        N1qlQueryResult otherResult = bucket.query(joinQuery);
++        QueryResult otherResult = cluster.query(joinQuery);
+ 
+         List<Map<String, Object>> finalResult = extractResultOrThrow(otherResult);
+-        return Result.of(finalResult, query.toString(), joinQuery.toString());
++        return Result.of(finalResult, query, joinQuery);
+     }
+ 
+     /**
+      * Extract a N1Ql result or throw if there is an issue.
+      */
+-    private static List<Map<String, Object>> extractResultOrThrow(N1qlQueryResult result) {
+-        if (!result.finalSuccess()) {
+-            LOGGER.warn("Query returned with errors: " + result.errors());
+-            throw new DataRetrievalFailureException("Query error: " + result.errors());
++    private static List<Map<String, Object>> extractResultOrThrow(QueryResult result) {
++        if (!result.meta().status().equals(QueryStatus.SUCCESS)) {
++            LOGGER.warn("Query returned with errors: " + result.meta().status());
++            throw new DataRetrievalFailureException("Query error: " + result.meta().status());
+         }
+ 
+         Random rand = new Random();
+ 
++        List<JsonObject> results = result.allRowsAsObject();
+         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
+-        for (N1qlQueryRow row : result) {
+-            content.add(row.value()
++        for (JsonObject row : results) {
++            content.add(row
+                     .put("price", rand.nextInt(2000))
+                     .toMap());
+         }
+diff --git a/src/main/java/trycb/service/Hotel.java b/src/main/java/trycb/service/Hotel.java
+index 384f74f..858f872 100644
+--- a/src/main/java/trycb/service/Hotel.java
++++ b/src/main/java/trycb/service/Hotel.java
+@@ -1,25 +1,23 @@
+ package trycb.service;
+ 
+-import java.util.ArrayList;
+-import java.util.HashMap;
+-import java.util.List;
+-import java.util.Map;
++import java.util.*;
+ 
+-import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
+-import com.couchbase.client.deps.com.fasterxml.jackson.core.JsonProcessingException;
++import com.couchbase.client.core.deps.com.fasterxml.jackson.core.JsonProcessingException;
+ import com.couchbase.client.java.Bucket;
++import com.couchbase.client.java.json.JacksonTransformers;
++import com.couchbase.client.java.json.JsonObject;
++import com.couchbase.client.java.kv.GetResult;
+ import com.couchbase.client.java.search.SearchQuery;
+ import com.couchbase.client.java.search.queries.ConjunctionQuery;
+-import com.couchbase.client.java.search.result.SearchQueryResult;
+ import com.couchbase.client.java.search.result.SearchQueryRow;
+-import com.couchbase.client.java.subdoc.DocumentFragment;
+-import com.couchbase.client.java.transcoder.JacksonTransformers;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.dao.DataRetrievalFailureException;
+ import org.springframework.stereotype.Service;
+ import trycb.model.Result;
++import com.couchbase.client.java.search.result.SearchResult;
++import com.couchbase.client.java.Cluster;
+ 
+ @Service
+ public class Hotel {
+@@ -27,10 +25,11 @@ public class Hotel {
+     private static final Logger LOGGER = LoggerFactory.getLogger(Hotel.class);
+ 
+     private Bucket bucket;
++    private Cluster cluster;
+ 
+     @Autowired
+-    public Hotel(Bucket bucket) {
+-        this.bucket = bucket;
++    public Hotel(Cluster cluster) {
++        this.cluster = cluster;
+     }
+ 
+     /**
+@@ -60,8 +59,8 @@ public class Hotel {
+                 .limit(100);
+ 
+         logQuery(query.export().toString());
+-        SearchQueryResult result = bucket.query(query);
+-
++        SearchQuery searchQuery = new SearchQuery("hotel_fts", fts);
++        SearchResult result = cluster.searchQuery(searchQuery);
+ 
+         //prepare the context to send to the app
+         String ftsContext;
+@@ -101,31 +100,24 @@ public class Hotel {
+     /**
+      * Extract a FTS result or throw if there is an issue.
+      */
+-    private List<Map<String, Object>> extractResultOrThrow(SearchQueryResult result) {
+-        if (!result.status().isSuccess()) {
++    private List<Map<String, Object>> extractResultOrThrow(SearchResult result) {
++        if (!result.meta().status().isSuccess()) {
+             LOGGER.warn("Query returned with errors: " + result.errors());
+             throw new DataRetrievalFailureException("Query error: " + result.errors());
+         }
+ 
+         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
+-        for (SearchQueryRow row : result) {
+-            DocumentFragment<Lookup> fragment = bucket
+-                    .lookupIn(row.id())
+-                    .get("country")
+-                    .get("city")
+-                    .get("state")
+-                    .get("address")
+-                    .get("name")
+-                    .get("description")
+-                    .execute();
+-
++        for (SearchQueryRow row : result.rows()) {
++            //DocumentFragment<Lookup> fragment = bucket
++            Optional<GetResult> result1 = bucket.defaultCollection().get(row.id());
++            JsonObject json = result1.get().contentAsObject();
++
++            String country = json.getString("country");
++            String city = json.getString("city");
++            String state = json.getString("state");
++            String address = json.getString("address");
+             Map<String, Object> map = new HashMap<String, Object>();
+ 
+-            String country = (String) fragment.content("country");
+-            String city = (String) fragment.content("city");
+-            String state = (String) fragment.content("state");
+-            String address = (String) fragment.content("address");
+-
+             StringBuilder fullAddr = new StringBuilder();
+             if (address != null)
+                 fullAddr.append(address).append(", ");
+@@ -139,8 +131,8 @@ public class Hotel {
+             if (fullAddr.length() > 2 && fullAddr.charAt(fullAddr.length() - 2) == ',')
+                 fullAddr.delete(fullAddr.length() - 2, fullAddr.length() - 1);
+ 
+-            map.put("name", fragment.content("name"));
+-            map.put("description", fragment.content("description"));
++            map.put("name", json.getString("name"));
++            map.put("description", json.getString("description"));
+             map.put("address", fullAddr.toString());
+ 
+             content.add(map);
+diff --git a/src/main/java/trycb/service/TokenService.java b/src/main/java/trycb/service/TokenService.java
+index 2aba8e1..2789fe1 100644
+--- a/src/main/java/trycb/service/TokenService.java
++++ b/src/main/java/trycb/service/TokenService.java
+@@ -1,7 +1,9 @@
+ package trycb.service;
+ 
+-import com.couchbase.client.deps.io.netty.util.CharsetUtil;
+-import com.couchbase.client.java.document.json.JsonObject;
++//import com.couchbase.client.deps.io.netty.util.CharsetUtil;
++//import com.couchbase.client.java.document.json.JsonObject;
++import com.couchbase.client.core.deps.io.netty.util.CharsetUtil;
++import com.couchbase.client.java.json.JsonObject;
+ import io.jsonwebtoken.JwtException;
+ import io.jsonwebtoken.Jwts;
+ import io.jsonwebtoken.SignatureAlgorithm;
+diff --git a/src/main/java/trycb/service/User.java b/src/main/java/trycb/service/User.java
+index c66fa69..a55ab6b 100644
+--- a/src/main/java/trycb/service/User.java
++++ b/src/main/java/trycb/service/User.java
+@@ -1,19 +1,22 @@
+ package trycb.service;
+ 
++import java.time.Duration;
++import java.util.Collection;
+ import java.util.Collections;
+-import java.util.List;
+ import java.util.Map;
++import java.util.Optional;
++
+ 
+ import com.couchbase.client.java.Bucket;
+-import com.couchbase.client.java.document.JsonDocument;
+-import com.couchbase.client.java.document.json.JsonArray;
+-import com.couchbase.client.java.document.json.JsonObject;
++import com.couchbase.client.java.kv.*;
++import com.couchbase.client.java.json.JsonArray;
++import com.couchbase.client.java.json.JsonObject;
++import com.couchbase.client.java.kv.GetResult;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+ import org.springframework.security.authentication.AuthenticationServiceException;
+ import org.springframework.security.crypto.bcrypt.BCrypt;
+ import org.springframework.stereotype.Service;
+-import rx.functions.Func1;
+ import trycb.model.Result;
+ 
+ @Service
+@@ -30,11 +33,13 @@ public class User {
+      * Try to log the given user in.
+      */
+     public Map<String, Object> login(final Bucket bucket, final String username, final String password) {
+-        JsonDocument doc = bucket.get("user::" + username);
++        //JsonDocument doc = bucket.get("user::" + username);
++        Optional<GetResult> doc = bucket.defaultCollection().get(username);
+ 
+-        if (doc == null) {
++        //if (doc == null) {
++        if (!doc.isPresent()){
+             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
+-        } else if(BCrypt.checkpw(password, doc.content().getString("password"))) {
++        } else if(BCrypt.checkpw(password, doc.get().contentAsObject().getString("password"))) {
+             return JsonObject.create()
+                 .put("token", jwtService.buildToken(username))
+                 .toMap();
+@@ -53,17 +58,21 @@ public class User {
+             .put("type", "user")
+             .put("name", username)
+             .put("password", passHash);
+-        JsonDocument doc;
+-        if (expiry > 0) {
+-            doc = JsonDocument.create("user::" + username, expiry, data);
+-        } else {
+-            doc = JsonDocument.create("user::" + username, data);
+-        }
+-        String narration = "User account created in document " + doc.id() + " in " + bucket.name()
+-                + (doc.expiry() > 0 ? ", with expiry of " + doc.expiry() + "s" : "");
++        JsonObject doc;
++        doc = JsonObject.create();
++            doc.put("user", username);
++            doc.put("data", data);
++
++        String narration = "User account created in document " + username + " in " + bucket.name()
++                + (expiry > 0 ? ", with expiry of " + expiry + " minute(s)" : "");
+ 
+         try {
+-            bucket.insert(doc);
++            if (expiry > 0) {
++                bucket.defaultCollection().insert(username, doc, InsertOptions.insertOptions().expiry(Duration.ofMinutes(expiry)));
++            }
++            else {
++                bucket.defaultCollection().insert(username, doc);
++            }
+             return Result.of(
+                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
+                     narration);
+@@ -76,9 +85,12 @@ public class User {
+      * Register a flight (or flights) for the given user.
+      */
+     public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
+-        JsonDocument userData = bucket.get("user::" + username);
+-        if (userData == null) {
++        Optional<GetResult> userDataProbe = bucket.defaultCollection().get(username);
++        GetResult userData = null;
++        if (!userDataProbe.isPresent()) {
+             throw new IllegalStateException();
++        }else{
++            userData = userDataProbe.get();
+         }
+ 
+         if (newFlights == null) {
+@@ -86,7 +98,7 @@ public class User {
+         }
+ 
+         JsonArray added = JsonArray.empty();
+-        JsonArray allBookedFlights = userData.content().getArray("flights");
++        JsonArray allBookedFlights = userData.contentAsObject().getArray("flights");
+         if(allBookedFlights == null) {
+             allBookedFlights = JsonArray.create();
+         }
+@@ -99,13 +111,13 @@ public class User {
+             added.add(t);
+         }
+ 
+-        userData.content().put("flights", allBookedFlights);
+-        JsonDocument response = bucket.upsert(userData);
++        userData.contentAsObject().put("flights", allBookedFlights);
++        MutationResult response = bucket.defaultCollection().upsert(username, userData.contentAsObject());
+ 
+         JsonObject responseData = JsonObject.create()
+             .put("added", added);
+ 
+-        return Result.of(responseData.toMap(), "Booked flight in Couchbase document " + response.id());
++        return Result.of(responseData.toMap(), "Booked flight in Couchbase document " + response.toString());
+     }
+ 
+     private static void checkFlight(Object f) {
+@@ -124,23 +136,14 @@ public class User {
+     /**
+      * Show all booked flights for the given user.
+      */
+-    public List<Object> getFlightsForUser(final Bucket bucket, final String username) {
+-        return bucket.async()
+-                     .get("user::" + username)
+-                     .map(new Func1<JsonDocument, List<Object>>() {
+-                         @Override
+-                         public List<Object> call(JsonDocument doc) {
+-                             JsonObject data = doc.content();
+-                             JsonArray flights = data.getArray("flights");
+-                             if (flights != null) {
+-                                 return flights.toList();
+-                             } else {
+-                                 return Collections.emptyList();
+-                             }
+-                         }
+-                     })
+-                     .defaultIfEmpty(Collections.emptyList())
+-                     .toBlocking()
+-                     .single();
++    public Object getFlightsForUser(final Bucket bucket, final String username) {
++        Object x = bucket.defaultCollection()
++                .get(username)
++                .get()
++                .contentAsObject()
++                .getArray("flights");
++        if(x == null)
++            return Collections.emptyList();
++        return x;
+     }
+ }
+diff --git a/src/main/java/trycb/util/StartupPreparations.java b/src/main/java/trycb/util/StartupPreparations.java
+index 192d70f..0362312 100644
+--- a/src/main/java/trycb/util/StartupPreparations.java
++++ b/src/main/java/trycb/util/StartupPreparations.java
+@@ -22,10 +22,10 @@
+ package trycb.util;
+ 
+ import com.couchbase.client.java.Bucket;
+-import com.couchbase.client.java.query.N1qlQuery;
+-import com.couchbase.client.java.query.N1qlQueryResult;
+-import com.couchbase.client.java.query.N1qlQueryRow;
+-import com.couchbase.client.java.query.Statement;
++import com.couchbase.client.java.*;
++import com.couchbase.client.java.json.JsonObject;
++import com.couchbase.client.java.query.QueryResult;
++import com.couchbase.client.java.query.QueryStatus;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.beans.factory.InitializingBean;
+@@ -35,23 +35,18 @@ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.List;
+ 
+-import static com.couchbase.client.java.query.Index.PRIMARY_NAME;
+-import static com.couchbase.client.java.query.Index.createIndex;
+-import static com.couchbase.client.java.query.Index.createPrimaryIndex;
+-import static com.couchbase.client.java.query.Select.select;
+-import static com.couchbase.client.java.query.dsl.Expression.i;
+-import static com.couchbase.client.java.query.dsl.Expression.s;
+-import static com.couchbase.client.java.query.dsl.Expression.x;
+-
+ @Component
+ public class StartupPreparations implements InitializingBean {
+ 
+     private static final Logger LOGGER = LoggerFactory.getLogger(StartupPreparations.class);
++    public static final String PRIMARY_NAME = "#primary";
+ 
+     private final Bucket bucket;
++    private final Cluster cluster;
+ 
+     @Autowired
+-    public StartupPreparations(final Bucket bucket) {
++    public StartupPreparations(final Bucket bucket, final Cluster cluster) {
++        this.cluster = cluster;
+         this.bucket = bucket;
+     }
+ 
+@@ -67,10 +62,8 @@ public class StartupPreparations implements InitializingBean {
+     private void ensureIndexes() throws Exception {
+         LOGGER.info("Ensuring all Indexes are created.");
+ 
+-        N1qlQueryResult indexResult = bucket.query(
+-            N1qlQuery.simple(select("indexes.*").from("system:indexes").where(i("keyspace_id").eq(s(bucket.name()))))
+-        );
+-
++        String query = "Select indexes.* FROM system:indexes WHERE keyspace_id = \"" + bucket.name() + "\"";
++        QueryResult indexResult = cluster.query(query);
+ 
+         List<String> indexesToCreate = new ArrayList<String>();
+         indexesToCreate.addAll(Arrays.asList(
+@@ -79,9 +72,9 @@ public class StartupPreparations implements InitializingBean {
+ 
+         boolean hasPrimary = false;
+         List<String> foundIndexes = new ArrayList<String>();
+-        for (N1qlQueryRow indexRow : indexResult) {
+-            String name = indexRow.value().getString("name");
+-            Boolean isPrimary = indexRow.value().getBoolean("is_primary");
++        for (JsonObject indexRow : indexResult.allRowsAsObject()) {
++            String name = indexRow.getString("name");
++            Boolean isPrimary = indexRow.getBoolean("is_primary");
+             if (name.equals(PRIMARY_NAME) || isPrimary == Boolean.TRUE) {
+                 hasPrimary = true;
+             } else {
+@@ -93,24 +86,27 @@ public class StartupPreparations implements InitializingBean {
+         if (!hasPrimary) {
+             //will create the primary index with default name "#primary".
+             //Note that some tools may also create it under the name "def_primary" (in which case hasPrimary should be true).
+-            Statement query = createPrimaryIndex().on(bucket.name()).withDefer();
++
++            String q = "CREATE PRIMARY INDEX ON " + bucket.name() + " WITH DEFER";
+             LOGGER.info("Executing index query: {}", query);
+-            N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
+-            if (result.finalSuccess()) {
++            QueryResult result = cluster.query(q);
++            if (result.meta().status().equals(QueryStatus.SUCCESS)) {
+                 LOGGER.info("Successfully created primary index.");
+             } else {
+-                LOGGER.warn("Could not create primary index: {}", result.errors());
++                LOGGER.warn("Could not create primary index: {}", result.meta().status());
+             }
+         }
+ 
+         for (String name : indexesToCreate) {
+-            Statement query = createIndex(name).on(bucket.name(), x(name.replace("def_", ""))).withDefer();
+-            LOGGER.info("Executing index query: {}", query);
+-            N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
+-            if (result.finalSuccess()) {
++            String q2 = "CREATE INDEX ON " + bucket.name() + " " + name.replace("def_", "") +
++                    " WITH DEFER";
++
++            LOGGER.info("Executing index query: {}", q2);
++            QueryResult result = cluster.query(q2);
++            if (result.meta().status().equals(QueryStatus.SUCCESS)) {
+                 LOGGER.info("Successfully created index with name {}.", name);
+             } else {
+-                LOGGER.warn("Could not create index {}: {}", name, result.errors());
++                LOGGER.warn("Could not create index {}: {}", name, result.meta().status());
+             }
+         }
+ 
+@@ -142,13 +138,13 @@ public class StartupPreparations implements InitializingBean {
+             indexes.append(name);
+         }
+ 
+-        String query = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ")";
+-        LOGGER.info("Executing index query: {}", query);
+-        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
+-        if (result.finalSuccess()) {
++        String q3 = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ")";
++        LOGGER.info("Executing index query: {}", q3);
++        QueryResult result = cluster.query(q3);
++        if (result.meta().status().equals(QueryStatus.SUCCESS)) {
+             LOGGER.info("Successfully executed build index query.");
+         } else {
+-            LOGGER.warn("Could not execute build index query {}.", result.errors());
++            LOGGER.warn("Could not execute build index query {}.", result.meta().status());
+         }
+     }
+ 
+diff --git a/src/main/java/trycb/web/AirportController.java b/src/main/java/trycb/web/AirportController.java
+index f8afb1e..40d7b38 100644
+--- a/src/main/java/trycb/web/AirportController.java
++++ b/src/main/java/trycb/web/AirportController.java
+@@ -4,6 +4,7 @@ import java.util.List;
+ import java.util.Map;
+ 
+ import com.couchbase.client.java.Bucket;
++import com.couchbase.client.java.Cluster;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+@@ -20,16 +21,18 @@ import trycb.service.Airport;
+ public class AirportController {
+ 
+     private final Bucket bucket;
++    private final Cluster cluster;
+ 
+     @Autowired
+-    public AirportController(Bucket bucket) {
++    public AirportController(Cluster cluster, Bucket bucket) {
++        this.cluster = cluster;
+         this.bucket = bucket;
+     }
+ 
+     @RequestMapping
+     public ResponseEntity<? extends IValue> airports(@RequestParam("search") String search) {
+         try {
+-            Result<List<Map<String, Object>>> result = Airport.findAll(bucket, search);
++            Result<List<Map<String, Object>>> result = Airport.findAll(cluster, bucket, search);
+             return ResponseEntity.ok(result);
+         } catch (Exception e) {
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+diff --git a/src/main/java/trycb/web/FlightPathController.java b/src/main/java/trycb/web/FlightPathController.java
+index 5dd811c..3ec52d9 100644
+--- a/src/main/java/trycb/web/FlightPathController.java
++++ b/src/main/java/trycb/web/FlightPathController.java
+@@ -5,6 +5,7 @@ import java.util.Calendar;
+ import java.util.Locale;
+ 
+ import com.couchbase.client.java.Bucket;
++import com.couchbase.client.java.Cluster;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+@@ -20,10 +21,12 @@ import trycb.service.FlightPath;
+ @RequestMapping("/api/flightPaths")
+ public class FlightPathController {
+ 
++    private final Cluster cluster;
+     private final Bucket bucket;
+ 
+     @Autowired
+-    public FlightPathController(Bucket bucket) {
++    public FlightPathController(Cluster cluster, Bucket bucket) {
++        this.cluster = cluster;
+         this.bucket = bucket;
+     }
+ 
+@@ -34,7 +37,7 @@ public class FlightPathController {
+         try {
+             Calendar calendar = Calendar.getInstance(Locale.US);
+             calendar.setTime(DateFormat.getDateInstance(DateFormat.SHORT, Locale.US).parse(leave));
+-            return ResponseEntity.ok(FlightPath.findAll(bucket, from, to, calendar));
++            return ResponseEntity.ok(FlightPath.findAll(cluster, bucket, from, to, calendar));
+         } catch (Exception e) {
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                     .body(new Error(e.getMessage()));
+diff --git a/src/main/java/trycb/web/UserController.java b/src/main/java/trycb/web/UserController.java
+index 4ceb468..3847d9e 100644
+--- a/src/main/java/trycb/web/UserController.java
++++ b/src/main/java/trycb/web/UserController.java
+@@ -5,7 +5,8 @@ import java.util.List;
+ import java.util.Map;
+ 
+ import com.couchbase.client.java.Bucket;
+-import com.couchbase.client.java.document.json.JsonObject;
++//import com.couchbase.client.java.document.json.JsonObject;
++import com.couchbase.client.java.json.JsonObject;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.beans.factory.annotation.Qualifier;
+ import org.springframework.beans.factory.annotation.Value;
+@@ -111,7 +112,8 @@ public class UserController {
+         try {
+             jwtService.verifyAuthenticationHeader(authentication, username);
+ 
+-            List<Object> flights = userService.getFlightsForUser(bucket, username);
++            //List<Object> flights = userService.getFlightsForUser(bucket, username);
++            Object flights = userService.getFlightsForUser(bucket, username);
+             return ResponseEntity.ok(Result.of(flights));
+         } catch (IllegalStateException e) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN)
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+index f1158b0..0948809 100644
+--- a/src/main/resources/application.properties
++++ b/src/main/resources/application.properties
+@@ -1,6 +1,6 @@
+ jwt.secret=UNSECURE_SECRET_TOKEN
+ jwt.enabled=true
+-storage.host=localhost
++storage.host="172.23.107.125aaa"
+ storage.bucket=travel-sample
+ storage.username=Administrator
+ storage.password=password

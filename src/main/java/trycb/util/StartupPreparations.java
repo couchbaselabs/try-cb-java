@@ -22,10 +22,10 @@
 package trycb.util;
 
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.query.N1qlQuery;
-import com.couchbase.client.java.query.N1qlQueryResult;
-import com.couchbase.client.java.query.N1qlQueryRow;
-import com.couchbase.client.java.query.Statement;
+import com.couchbase.client.java.*;
+import com.couchbase.client.java.json.JsonObject;
+import com.couchbase.client.java.query.QueryResult;
+import com.couchbase.client.java.query.QueryStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -35,23 +35,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.couchbase.client.java.query.Index.PRIMARY_NAME;
-import static com.couchbase.client.java.query.Index.createIndex;
-import static com.couchbase.client.java.query.Index.createPrimaryIndex;
-import static com.couchbase.client.java.query.Select.select;
-import static com.couchbase.client.java.query.dsl.Expression.i;
-import static com.couchbase.client.java.query.dsl.Expression.s;
-import static com.couchbase.client.java.query.dsl.Expression.x;
-
 @Component
 public class StartupPreparations implements InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StartupPreparations.class);
+    public static final String PRIMARY_NAME = "#primary";
 
     private final Bucket bucket;
+    private final Cluster cluster;
 
     @Autowired
-    public StartupPreparations(final Bucket bucket) {
+    public StartupPreparations(final Bucket bucket, final Cluster cluster) {
+        this.cluster = cluster;
         this.bucket = bucket;
     }
 
@@ -67,10 +62,8 @@ public class StartupPreparations implements InitializingBean {
     private void ensureIndexes() throws Exception {
         LOGGER.info("Ensuring all Indexes are created.");
 
-        N1qlQueryResult indexResult = bucket.query(
-            N1qlQuery.simple(select("indexes.*").from("system:indexes").where(i("keyspace_id").eq(s(bucket.name()))))
-        );
-
+        String query = "Select indexes.* FROM system:indexes WHERE keyspace_id = \"" + bucket.name() + "\"";
+        QueryResult indexResult = cluster.query(query);
 
         List<String> indexesToCreate = new ArrayList<String>();
         indexesToCreate.addAll(Arrays.asList(
@@ -79,9 +72,9 @@ public class StartupPreparations implements InitializingBean {
 
         boolean hasPrimary = false;
         List<String> foundIndexes = new ArrayList<String>();
-        for (N1qlQueryRow indexRow : indexResult) {
-            String name = indexRow.value().getString("name");
-            Boolean isPrimary = indexRow.value().getBoolean("is_primary");
+        for (JsonObject indexRow : indexResult.allRowsAsObject()) {
+            String name = indexRow.getString("name");
+            Boolean isPrimary = indexRow.getBoolean("is_primary");
             if (name.equals(PRIMARY_NAME) || isPrimary == Boolean.TRUE) {
                 hasPrimary = true;
             } else {
@@ -93,24 +86,27 @@ public class StartupPreparations implements InitializingBean {
         if (!hasPrimary) {
             //will create the primary index with default name "#primary".
             //Note that some tools may also create it under the name "def_primary" (in which case hasPrimary should be true).
-            Statement query = createPrimaryIndex().on(bucket.name()).withDefer();
+
+            String q = "CREATE PRIMARY INDEX ON " + bucket.name() + " WITH DEFER";
             LOGGER.info("Executing index query: {}", query);
-            N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
-            if (result.finalSuccess()) {
+            QueryResult result = cluster.query(q);
+            if (result.meta().status().equals(QueryStatus.SUCCESS)) {
                 LOGGER.info("Successfully created primary index.");
             } else {
-                LOGGER.warn("Could not create primary index: {}", result.errors());
+                LOGGER.warn("Could not create primary index: {}", result.meta().status());
             }
         }
 
         for (String name : indexesToCreate) {
-            Statement query = createIndex(name).on(bucket.name(), x(name.replace("def_", ""))).withDefer();
-            LOGGER.info("Executing index query: {}", query);
-            N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
-            if (result.finalSuccess()) {
+            String q2 = "CREATE INDEX ON " + bucket.name() + " " + name.replace("def_", "") +
+                    " WITH DEFER";
+
+            LOGGER.info("Executing index query: {}", q2);
+            QueryResult result = cluster.query(q2);
+            if (result.meta().status().equals(QueryStatus.SUCCESS)) {
                 LOGGER.info("Successfully created index with name {}.", name);
             } else {
-                LOGGER.warn("Could not create index {}: {}", name, result.errors());
+                LOGGER.warn("Could not create index {}: {}", name, result.meta().status());
             }
         }
 
@@ -142,13 +138,13 @@ public class StartupPreparations implements InitializingBean {
             indexes.append(name);
         }
 
-        String query = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ")";
-        LOGGER.info("Executing index query: {}", query);
-        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
-        if (result.finalSuccess()) {
+        String q3 = "BUILD INDEX ON `" + bucket.name() + "` (" + indexes.toString() + ")";
+        LOGGER.info("Executing index query: {}", q3);
+        QueryResult result = cluster.query(q3);
+        if (result.meta().status().equals(QueryStatus.SUCCESS)) {
             LOGGER.info("Successfully executed build index query.");
         } else {
-            LOGGER.warn("Could not execute build index query {}.", result.errors());
+            LOGGER.warn("Could not execute build index query {}.", result.meta().status());
         }
     }
 

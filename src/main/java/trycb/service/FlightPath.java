@@ -1,27 +1,20 @@
 package trycb.service;
 
+import com.couchbase.client.java.Cluster;
+import com.couchbase.client.java.json.JsonObject;
+import com.couchbase.client.java.query.QueryResult;
 import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.query.N1qlQuery;
-import com.couchbase.client.java.query.N1qlQueryResult;
-import com.couchbase.client.java.query.N1qlQueryRow;
-import com.couchbase.client.java.query.Statement;
-import com.couchbase.client.java.query.dsl.Sort;
+import com.couchbase.client.java.query.QueryStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import trycb.model.Result;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import static com.couchbase.client.java.query.Select.select;
-import static com.couchbase.client.java.query.dsl.Expression.i;
-import static com.couchbase.client.java.query.dsl.Expression.s;
-import static com.couchbase.client.java.query.dsl.Expression.x;
 
 @Service
 public class FlightPath {
@@ -31,62 +24,57 @@ public class FlightPath {
     /**
      * Find all flight paths.
      */
-    public static Result<List<Map<String, Object>>> findAll(final Bucket bucket, String from, String to, Calendar leave) {
-        Statement query = select(x("faa").as("fromAirport"))
-            .from(i(bucket.name()))
-            .where(x("airportname").eq(s(from)))
-            .union()
-            .select(x("faa").as("toAirport"))
-            .from(i(bucket.name()))
-            .where(x("airportname").eq(s(to)));
+    public static Result<List<Map<String, Object>>> findAll(final Cluster cluster, Bucket bucket, String from, String to, Calendar leave) {
+        String query = "SELECT faa AS fromAirport FROM `" + bucket.name() + "` WHERE airportname = \"" + from + "\" UNION " +
+                "SELECT faa AS toAirport FROM `" + bucket.name() + "` WHERE airportname = \"" + to + "\"";
+        logQuery(query);
+        QueryResult result = cluster.query(query);
+        List<JsonObject> results = result.allRowsAsObject();
 
-        logQuery(query.toString());
-        N1qlQueryResult result = bucket.query(N1qlQuery.simple(query));
-
-        if (!result.finalSuccess()) {
-            LOGGER.warn("Query returned with errors: " + result.errors());
-            throw new DataRetrievalFailureException("Query error: " + result.errors());
+        if (!result.meta().status().equals(QueryStatus.SUCCESS)){
+            LOGGER.warn("Query returned with errors: " + result.meta().status());
+            throw new DataRetrievalFailureException("Query error: " + result.meta().status());
         }
 
         String fromAirport = null;
         String toAirport = null;
-        for (N1qlQueryRow row : result) {
-            if (row.value().containsKey("fromAirport")) {
-                fromAirport = row.value().getString("fromAirport");
+
+        for (JsonObject row : results) {
+            if (row.containsKey("fromAirport")) {
+                fromAirport = row.getString("fromAirport");
             }
-            if (row.value().containsKey("toAirport")) {
-                toAirport = row.value().getString("toAirport");
+            if (row.containsKey("toAirport")) {
+                toAirport = row.getString("toAirport");
             }
         }
 
-        Statement joinQuery = select("a.name", "s.flight", "s.utc", "r.sourceairport", "r.destinationairport", "r.equipment")
-            .from(i(bucket.name()).as("r"))
-            .unnest("r.schedule AS s")
-            .join(i(bucket.name()).as("a") + " ON KEYS r.airlineid")
-            .where(x("r.sourceairport").eq(s(fromAirport)).and(x("r.destinationairport").eq(s(toAirport))).and(x("s.day").eq(leave.get(Calendar.DAY_OF_WEEK))))
-            .orderBy(Sort.asc("a.name"));
-        logQuery(joinQuery.toString());
+        String joinQuery = "SELECT a.name, s.flight, s.utc, r.sourceairport, r.destinationairport, r.equipment FROM `" +
+                bucket.name() + "` AS r UNNEST r.schedule AS s JOIN `" + bucket.name() + "` AS a ON KEYS r.airlineid WHERE " +
+                "r.sourceairport = \"" + fromAirport + "\" AND r.destinationairport = \"" + toAirport + "\" AND s.day = " +
+                leave.get(Calendar.DAY_OF_WEEK) + " ORDER BY a.name";
+        logQuery(joinQuery);
 
-        N1qlQueryResult otherResult = bucket.query(joinQuery);
+        QueryResult otherResult = cluster.query(joinQuery);
 
         List<Map<String, Object>> finalResult = extractResultOrThrow(otherResult);
-        return Result.of(finalResult, query.toString(), joinQuery.toString());
+        return Result.of(finalResult, query, joinQuery);
     }
 
     /**
      * Extract a N1Ql result or throw if there is an issue.
      */
-    private static List<Map<String, Object>> extractResultOrThrow(N1qlQueryResult result) {
-        if (!result.finalSuccess()) {
-            LOGGER.warn("Query returned with errors: " + result.errors());
-            throw new DataRetrievalFailureException("Query error: " + result.errors());
+    private static List<Map<String, Object>> extractResultOrThrow(QueryResult result) {
+        if (!result.meta().status().equals(QueryStatus.SUCCESS)) {
+            LOGGER.warn("Query returned with errors: " + result.meta().status());
+            throw new DataRetrievalFailureException("Query error: " + result.meta().status());
         }
 
         Random rand = new Random();
 
+        List<JsonObject> results = result.allRowsAsObject();
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        for (N1qlQueryRow row : result) {
-            content.add(row.value()
+        for (JsonObject row : results) {
+            content.add(row
                     .put("price", rand.nextInt(2000))
                     .toMap());
         }
