@@ -1,6 +1,6 @@
 package trycb.service;
 
-import com.couchbase.client.core.error.QueryServiceException;
+import com.couchbase.client.core.error.QueryException;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.query.QueryOptions;
@@ -42,7 +42,7 @@ public class Airport {
         QueryResult result = null;
         try {
             result = cluster.query(query, QueryOptions.queryOptions().rawParams("$val", params));
-        } catch (QueryServiceException e) {
+        } catch (QueryException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error", e);
         }

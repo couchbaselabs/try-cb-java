@@ -1,6 +1,6 @@
 package trycb.service;
 
-import com.couchbase.client.core.error.QueryServiceException;
+import com.couchbase.client.core.error.QueryException;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.json.JsonArray;
 import com.couchbase.client.java.json.JsonObject;
@@ -42,7 +42,7 @@ public class FlightPath {
         try {
             result = cluster.query(query,
                     QueryOptions.queryOptions().rawParams("$from", from).rawParams("$to", to));
-        } catch (QueryServiceException e) {
+        } catch (QueryException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error: " + result);
         }
@@ -79,7 +79,7 @@ public class FlightPath {
 
         try {
             otherResult = cluster.query(joinQuery, QueryOptions.queryOptions().parameters(parms));
-        } catch (QueryServiceException e) {
+        } catch (QueryException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error: " + otherResult);
         }
