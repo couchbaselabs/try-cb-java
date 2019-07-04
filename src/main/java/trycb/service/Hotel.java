@@ -41,7 +41,7 @@ public class Hotel {
     /**
      * Search for a hotel in a particular location.
      */
-    public Result findHotels(final Cluster cluster, final String location, final String description) {
+    public Result<List<Map<String, Object>>> findHotels(final Cluster cluster, final String location, final String description) {
         ConjunctionQuery fts = SearchQuery.conjuncts(SearchQuery.term("hotel").field("type"));
 
         if (location != null && !location.isEmpty() && !"*".equals(location)) {
@@ -86,14 +86,14 @@ public class Hotel {
     /**
      * Search for an hotel.
      */
-    public Result findHotels(final Cluster cluster, final String description) {
+    public Result<List<Map<String, Object>>> findHotels(final Cluster cluster, final String description) {
         return findHotels(cluster, "*", description);
     }
 
     /**
      * Find all hotels.
      */
-    public Result findAllHotels(final Cluster cluster) {
+    public Result<List<Map<String, Object>>> findAllHotels(final Cluster cluster) {
         return findHotels(cluster, "*", "*");
     }
 

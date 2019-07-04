@@ -146,56 +146,6 @@ public class User {
         }
     }
 
-    /**
-     * Show all booked flights for the given user.
-     */
-    
-    // Getting the flights this way does not work. An exception is thrown.
-    // FIXME: Make this work, and use it instead of the synchronous method, below.
-    public List<Object> getFlightsForUserAsync(final Scope scope, final String username) {
-        LOGGER.warn("starting getFlightsForUser");
-        try {
-            return scope.collection(USERS_COLLECTION_NAME)
-                         .async()
-                         .get("user::" + username)
-                         .thenApply(new Function<Optional<GetResult>, List<Object>>() {
-                             @Override
-                             public List<Object> apply(Optional<GetResult> doc) {
-                                 LOGGER.warn("trying to get flights");
-                                 if (!doc.isPresent()) {
-                                     return Collections.emptyList();
-                                 }
-                                 JsonObject data = doc.get().contentAsObject();
-                                 JsonArray flights = data.getArray("flights");
-                                 if (flights == null) {
-                                     return Collections.emptyList();
-                                 }
-                                 // The "flights" array contains flight ids. Convert them to actual objects.
-                                 Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
-                                 JsonArray results = JsonArray.create();
-                                 for (int i = 0; i < flights.size(); i++) {
-                                     String flightId = flights.getString(i);
-                                     LOGGER.warn("trying to retrieve record " + flightId + " from collection " + flightsCollection.name() + " in scope " + flightsCollection.scopeName());
-                                     Optional<GetResult> res = flightsCollection.get(flightId);
-                                     if (!res.isPresent()) {
-                                         LOGGER.warn("Unable to retrieve flight id " + flightId);
-                                         continue;
-                                     }
-                                     JsonObject flight = res.get().contentAsObject();
-                                     LOGGER.warn("retrieved flight " + flightId + " contents: " + flight.toString());
-                                     results.add(flight);
-                                 }
-                                 return results.toList();
-                             }
-                         })
-                         .get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Unable to get flights for user " + username, e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException("Unable to get flights for user " + username, e);
-        }
-    }
-
     public List<Object> getFlightsForUser(final Scope scope, final String username) {
         Collection users = scope.collection(USERS_COLLECTION_NAME);
         Optional<GetResult> doc = users.get("user::" + username);

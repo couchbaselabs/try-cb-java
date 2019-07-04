@@ -42,7 +42,7 @@ public class Airport {
             result = cluster.query(query);
         } catch (QueryServiceException e) {
             LOGGER.warn("Query failed with exception: " + e);
-            throw new DataRetrievalFailureException("Query error: " + result);
+            throw new DataRetrievalFailureException("Query error", e);
         }
 
         List<JsonObject> resultObjects = result.allRowsAsObject();

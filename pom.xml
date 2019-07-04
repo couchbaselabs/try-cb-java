@@ -38,7 +38,6 @@
         <dependency>
         	<groupId>org.springframework.security</groupId>
         	<artifactId>spring-security-core</artifactId>
-        	<version>4.2.12.RELEASE</version>
         </dependency>
 
         <!-- json web token support -->

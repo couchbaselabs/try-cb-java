@@ -7,9 +7,7 @@ curl -u Administrator:password -X POST http://localhost:8091/pools/default/bucke
 
 # create collections in each scope
 curl -u Administrator:password -X POST http://localhost:8091/pools/default/buckets/default/collections/larson-travel -d name=users
-curl -u Administrator:password -X POST http://localhost:8091/pools/default/buckets/default/collections/larson-travel -d name=trips
 curl -u Administrator:password -X POST http://localhost:8091/pools/default/buckets/default/collections/larson-travel -d name=flights
-curl -u Administrator:password -X POST http://localhost:8091/pools/default/buckets/default/collections/larson-travel -d name=stays
 
 # show what we have made
 echo '\n\n\n\nTHE FINAL RESULT'
