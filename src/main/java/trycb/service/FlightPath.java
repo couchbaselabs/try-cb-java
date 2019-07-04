@@ -2,7 +2,9 @@ package trycb.service;
 
 import com.couchbase.client.core.error.QueryServiceException;
 import com.couchbase.client.java.Cluster;
+import com.couchbase.client.java.json.JsonArray;
 import com.couchbase.client.java.json.JsonObject;
+import com.couchbase.client.java.query.QueryOptions;
 import com.couchbase.client.java.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,17 +30,18 @@ public class FlightPath {
         StringBuilder builder = new StringBuilder();
         builder.append("select faa as fromAirport ");
         builder.append("from `").append(bucket).append("` ");
-        builder.append("where airportname = '").append(from).append("' ");
+        builder.append("where airportname = $from ");
         builder.append("union ");
         builder.append("select faa as toAirport ");
         builder.append("from `").append(bucket).append("` ");
-        builder.append("where airportname = '").append(to).append("' ");
+        builder.append("where airportname = $to");
         String query = builder.toString();
 
         logQuery(query);
         QueryResult result = null;
         try {
-            result = cluster.query(query);
+            result = cluster.query(query,
+                    QueryOptions.queryOptions().rawParams("$from", from).rawParams("$to", to));
         } catch (QueryServiceException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error: " + result);
@@ -61,15 +64,21 @@ public class FlightPath {
         joinBuilder.append("from `").append(bucket).append("` as r ");
         joinBuilder.append("unnest r.schedule as s ");
         joinBuilder.append("join `").append(bucket).append("` as a on keys r.airlineid ");
-        joinBuilder.append("where r.sourceairport = '"). append(fromAirport).append("' and r.destinationairport = '").append(toAirport).append("' ");
-        joinBuilder.append("and s.day = ").append(leave.get(Calendar.DAY_OF_WEEK)).append(" ");
+        joinBuilder.append("where r.sourceairport = ? and r.destinationairport = ? ");
+        joinBuilder.append("and s.day = ? ");
         joinBuilder.append("order by a.name asc");
         String joinQuery = joinBuilder.toString();
 
+        JsonArray parms = JsonArray.create();
+        parms.add(fromAirport);
+        parms.add(toAirport);
+        parms.add(leave.get(Calendar.DAY_OF_WEEK));
+
         logQuery(joinQuery);
         QueryResult otherResult = null;
+
         try {
-            otherResult = cluster.query(joinQuery);
+            otherResult = cluster.query(joinQuery, QueryOptions.queryOptions().parameters(parms));
         } catch (QueryServiceException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error: " + otherResult);

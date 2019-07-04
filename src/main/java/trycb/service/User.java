@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.Collection;
@@ -17,8 +15,6 @@ import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.GetResult;
 import com.couchbase.client.java.kv.InsertOptions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -38,8 +34,6 @@ public class User {
     public User(TokenService jwtService) {
         this.jwtService = jwtService;
     }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(User.class);
 
     static final String USERS_COLLECTION_NAME = "users";
     static final String FLIGHTS_COLLECTION_NAME = "flights";

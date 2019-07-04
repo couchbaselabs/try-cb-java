@@ -3,6 +3,7 @@ package trycb.service;
 import com.couchbase.client.core.error.QueryServiceException;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.json.JsonObject;
+import com.couchbase.client.java.query.QueryOptions;
 import com.couchbase.client.java.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,18 +29,19 @@ public class Airport {
         builder.append("select airportname from `").append(bucket).append("` where ");
 
         if (params.length() == 3) {
-            builder.append("faa = '").append(params.toUpperCase()).append("'");
+            builder.append("faa = $val");
         } else if (params.length() == 4 && (params.equals(params.toUpperCase()) || params.equals(params.toLowerCase()))) {
-            builder.append("icao = '").append(params.toUpperCase()).append("'");
+            builder.append("icao = $val");
         } else {
-            builder.append("airportname like '").append(params).append("%'");
+            // The airport name should start with the parameter value.
+            builder.append("POSITION(airportname, $val) = 0");
         }
         String query = builder.toString();
 
         logQuery(query);
         QueryResult result = null;
         try {
-            result = cluster.query(query);
+            result = cluster.query(query, QueryOptions.queryOptions().rawParams("$val", params));
         } catch (QueryServiceException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error", e);
