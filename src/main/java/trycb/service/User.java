@@ -146,7 +146,7 @@ public class User {
         }
     }
 
-    public List<Object> getFlightsForUser(final Scope scope, final String username) {
+    public List<Map<String, Object>> getFlightsForUser(final Scope scope, final String username) {
         Collection users = scope.collection(USERS_COLLECTION_NAME);
         Optional<GetResult> doc = users.get("user::" + username);
         if (!doc.isPresent()) {
@@ -160,17 +160,17 @@ public class User {
 
         // The "flights" array contains flight ids. Convert them to actual objects.
         Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
-        JsonArray results = JsonArray.create();
+        List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         for (int i = 0; i < flights.size(); i++) {
             String flightId = flights.getString(i);
             Optional<GetResult> res = flightsCollection.get(flightId);
             if (!res.isPresent()) {
                 throw new RuntimeException("Unable to retrieve flight id " + flightId);
             }
-            JsonObject flight = res.get().contentAsObject();
+            Map<String, Object> flight = res.get().contentAsObject().toMap();
             results.add(flight);
         }
-        return results.toList();
+        return results;
     }
 
 }

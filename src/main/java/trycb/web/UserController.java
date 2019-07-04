@@ -114,7 +114,7 @@ public class UserController {
         try {
             jwtService.verifyAuthenticationHeader(authentication, username);
 
-            List<Object> flights = userService.getFlightsForUser(scope, username);
+            List<Map<String, Object>> flights = userService.getFlightsForUser(scope, username);
             return ResponseEntity.ok(Result.of(flights));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
