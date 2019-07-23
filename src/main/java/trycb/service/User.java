@@ -42,10 +42,10 @@ public class User {
      * Try to log the given user in.
      */
     public Map<String, Object> login(final Scope scope, final String username, final String password) {
-        Optional<GetResult> doc = scope.collection(USERS_COLLECTION_NAME).get("user::" + username);
+        Optional<GetResult> doc = scope.collection(USERS_COLLECTION_NAME).get(username);
 
         if (!doc.isPresent()) {
-            throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
+            throw new AuthenticationCredentialsNotFoundException("Bad Username or Password: " + username);
         }
         JsonObject res = doc.get().contentAsObject();
         if(BCrypt.checkpw(password, res.getString("password"))) {
@@ -71,12 +71,12 @@ public class User {
         if (expiry.ordinal() > 0) {
             options.durabilityLevel(expiry);
         }
-        String narration = "User account created in document user::" + username + " in bucket " + scope.bucketName()
+        String narration = "User account created in document " + username + " in bucket " + scope.bucketName()
                 + " scope " + scope.name() + " collection " + USERS_COLLECTION_NAME
                 + (expiry.ordinal() > 0 ? ", with expiry of " + expiry.ordinal() + "s" : "");
 
         try {
-            scope.collection(USERS_COLLECTION_NAME).insert("user::" + username, doc);
+            scope.collection(USERS_COLLECTION_NAME).insert(username, doc);
             return Result.of(
                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
                     narration);
@@ -89,7 +89,7 @@ public class User {
      * Register a flight (or flights) for the given user.
      */
     public Result<Map<String, Object>> registerFlightForUser(final Scope scope, final String username, final JsonArray newFlights) {
-        String userId = "user::" + username;
+        String userId = username;
         Collection usersCollection = scope.collection(USERS_COLLECTION_NAME);
         Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
         Optional<GetResult> userDataFetch = usersCollection.get(userId);
@@ -112,7 +112,7 @@ public class User {
             checkFlight(newFlight);
             JsonObject t = ((JsonObject) newFlight);
             t.put("bookedon", "try-cb-java");
-            String flightId = "flight::" + UUID.randomUUID().toString();
+            String flightId = UUID.randomUUID().toString();
             flightsCollection.insert(flightId, t);
             allBookedFlights.add(flightId);
             added.add(t);
@@ -142,7 +142,7 @@ public class User {
 
     public List<Map<String, Object>> getFlightsForUser(final Scope scope, final String username) {
         Collection users = scope.collection(USERS_COLLECTION_NAME);
-        Optional<GetResult> doc = users.get("user::" + username);
+        Optional<GetResult> doc = users.get(username);
         if (!doc.isPresent()) {
             return Collections.emptyList();
         }
