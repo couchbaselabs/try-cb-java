@@ -41,13 +41,13 @@ public class Airport {
         logQuery(query);
         QueryResult result = null;
         try {
-            result = cluster.query(query, QueryOptions.queryOptions().rawParams("$val", params));
+            result = cluster.query(query, QueryOptions.queryOptions().raw("$val", params));
         } catch (QueryException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error", e);
         }
 
-        List<JsonObject> resultObjects = result.allRowsAsObject();
+        List<JsonObject> resultObjects = result.rowsAsObject();
         List<Map<String, Object>> data = new LinkedList<Map<String, Object>>();
         for (JsonObject obj: resultObjects) {
             data.add(obj.toMap());

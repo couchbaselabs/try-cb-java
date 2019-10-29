@@ -8,11 +8,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.couchbase.client.core.deps.com.fasterxml.jackson.core.JsonProcessingException;
+import com.couchbase.client.core.error.KeyNotFoundException;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.queries.ConjunctionQuery;
-import com.couchbase.client.java.search.result.SearchQueryRow;
+import com.couchbase.client.java.search.result.SearchRow;
 import com.couchbase.client.java.search.result.SearchResult;
 import com.couchbase.client.java.json.JacksonTransformers;
 import com.couchbase.client.java.kv.LookupInResult;
@@ -61,20 +62,20 @@ public class Hotel {
                 ));
         }
 
-        SearchQuery query = new SearchQuery("hotels", fts)
-                .limit(100);
+        // SearchQuery query = new SearchQuery("hotels", fts)
+        //         .limit(100);
 
-        logQuery(query.export().toString());
-        SearchResult result = cluster.searchQuery(query);
+        logQuery(fts.export().toString());
+        SearchResult result = cluster.searchQuery("hotels",fts);
 
 
         //prepare the context to send to the app
         String ftsContext;
         try {
             ftsContext = JacksonTransformers.MAPPER.writerWithDefaultPrettyPrinter().
-                    writeValueAsString(query.export());
+                    writeValueAsString(fts.export());
         } catch (JsonProcessingException e) {
-            ftsContext = query.export().toString();
+            ftsContext = fts.export().toString();
         }
         String subdocContext = "        Optional<LookupInResult> lookup = bucket.defaultCollection().lookupIn(row.id(),\n" +
                 "                Arrays.asList(get(\"country\"), get(\"city\"), get(\"state\"), get(\"address\"),\n" +
@@ -101,20 +102,22 @@ public class Hotel {
      * Extract a FTS result or throw if there is an issue.
      */
     private List<Map<String, Object>> extractResultOrThrow(SearchResult result) {
-        if (!result.meta().status().isSuccess()) {
+        if (!result.metaData().status().isSuccess()) {
             LOGGER.warn("Query returned with errors: " + result.errors());
             throw new DataRetrievalFailureException("Query error: " + result.errors());
         }
 
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        for (SearchQueryRow row : result.rows()) {
-            Optional<LookupInResult> lookup = bucket.defaultCollection().lookupIn(row.id(),
+        for (SearchRow row : result.rows()) {
+            
+            LookupInResult res;
+            try {
+                res = bucket.defaultCollection().lookupIn(row.id(),
                     Arrays.asList(get("country"), get("city"), get("state"), get("address"),
-                            get("name"), get("description")));
-
-            if (!lookup.isPresent())
+                        get("name"), get("description")));
+            } catch (KeyNotFoundException ex) {
                 continue;
-            LookupInResult res = lookup.get();
+            }
 
             Map<String, Object> map = new HashMap<String, Object>();
 

@@ -25,7 +25,7 @@
 	    <dependency>
 			<groupId>com.couchbase.client</groupId>
 			<artifactId>java-client</artifactId>
-			<version>3.0.0-alpha.5</version>
+			<version>3.0.0-beta.1</version>
 	    </dependency>
 
         <!-- tx for some data exceptions -->

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.couchbase.client.core.error.KeyNotFoundException;
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.Collection;
 import com.couchbase.client.java.Scope;
@@ -42,12 +43,13 @@ public class User {
      * Try to log the given user in.
      */
     public Map<String, Object> login(final Scope scope, final String username, final String password) {
-        Optional<GetResult> doc = scope.collection(USERS_COLLECTION_NAME).get(username);
-
-        if (!doc.isPresent()) {
+        GetResult doc;
+        try {
+            doc = scope.collection(USERS_COLLECTION_NAME).get(username);
+        } catch (KeyNotFoundException ex) {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password: " + username);
         }
-        JsonObject res = doc.get().contentAsObject();
+        JsonObject res = doc.contentAsObject();
         if(BCrypt.checkpw(password, res.getString("password"))) {
             return JsonObject.create()
                 .put("token", jwtService.buildToken(username))
@@ -69,7 +71,7 @@ public class User {
             .put("password", passHash);
         InsertOptions options = insertOptions();
         if (expiry.ordinal() > 0) {
-            options.durabilityLevel(expiry);
+            options.durability(expiry);
         }
         String narration = "User account created in document " + username + " in bucket " + scope.bucketName()
                 + " scope " + scope.name() + " collection " + USERS_COLLECTION_NAME
@@ -92,11 +94,13 @@ public class User {
         String userId = username;
         Collection usersCollection = scope.collection(USERS_COLLECTION_NAME);
         Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
-        Optional<GetResult> userDataFetch = usersCollection.get(userId);
-        if (!userDataFetch.isPresent()) {
+        GetResult userDataFetch;
+        try {
+            userDataFetch = usersCollection.get(userId);
+        } catch (KeyNotFoundException ex) {
             throw new IllegalStateException();
         }
-        JsonObject userData = userDataFetch.get().contentAsObject();
+        JsonObject userData = userDataFetch.contentAsObject();
 
         if (newFlights == null) {
             throw new IllegalArgumentException("No flights in payload");
@@ -142,11 +146,13 @@ public class User {
 
     public List<Map<String, Object>> getFlightsForUser(final Scope scope, final String username) {
         Collection users = scope.collection(USERS_COLLECTION_NAME);
-        Optional<GetResult> doc = users.get(username);
-        if (!doc.isPresent()) {
+        GetResult doc;
+        try {
+            doc = users.get(username);
+        } catch (KeyNotFoundException ex) {
             return Collections.emptyList();
         }
-        JsonObject data = doc.get().contentAsObject();
+        JsonObject data = doc.contentAsObject();
         JsonArray flights = data.getArray("flights");
         if (flights == null) {
             return Collections.emptyList();
@@ -157,11 +163,13 @@ public class User {
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         for (int i = 0; i < flights.size(); i++) {
             String flightId = flights.getString(i);
-            Optional<GetResult> res = flightsCollection.get(flightId);
-            if (!res.isPresent()) {
+            GetResult res;
+            try {
+                res = flightsCollection.get(flightId);
+            } catch (KeyNotFoundException ex) {
                 throw new RuntimeException("Unable to retrieve flight id " + flightId);
             }
-            Map<String, Object> flight = res.get().contentAsObject().toMap();
+            Map<String, Object> flight = res.contentAsObject().toMap();
             results.add(flight);
         }
         return results;

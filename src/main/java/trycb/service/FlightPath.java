@@ -41,13 +41,13 @@ public class FlightPath {
         QueryResult result = null;
         try {
             result = cluster.query(query,
-                    QueryOptions.queryOptions().rawParams("$from", from).rawParams("$to", to));
+                    QueryOptions.queryOptions().raw("$from", from).raw("$to", to));
         } catch (QueryException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error: " + result);
         }
 
-        List<JsonObject> rows = result.allRowsAsObject();
+        List<JsonObject> rows = result.rowsAsObject();
         String fromAirport = null;
         String toAirport = null;
         for (JsonObject obj: rows) {
@@ -84,7 +84,7 @@ public class FlightPath {
             throw new DataRetrievalFailureException("Query error: " + otherResult);
         }
 
-        List<JsonObject> resultRows = otherResult.allRowsAsObject();
+        List<JsonObject> resultRows = otherResult.rowsAsObject();
         Random rand = new Random();
         List<Map<String, Object>> data = new LinkedList<Map<String, Object>>();
         for (JsonObject row : resultRows) {
