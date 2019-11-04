@@ -20,11 +20,11 @@ public class TokenService {
     private boolean useJwt;
 
     /**
-     * @throws IllegalStateException when the Authentication header couldn't be verified or didn't match the expected
+     * @throws IllegalStateException when the Authorization header couldn't be verified or didn't match the expected
      * username.
      */
-    public void verifyAuthenticationHeader(String authentication, String expectedUsername) {
-        String token = authentication.replaceFirst("Bearer ", "");
+    public void verifyAuthenticationHeader(String authorization, String expectedUsername) {
+        String token = authorization.replaceFirst("Bearer ", "");
         String tokenName;
         if (useJwt) {
             tokenName = verifyJwt(token);

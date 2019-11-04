@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.couchbase.client.core.deps.com.fasterxml.jackson.core.JsonProcessingException;
 import com.couchbase.client.core.error.KeyNotFoundException;
@@ -109,7 +108,7 @@ public class Hotel {
 
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
         for (SearchRow row : result.rows()) {
-            
+
             LookupInResult res;
             try {
                 res = bucket.defaultCollection().lookupIn(row.id(),
