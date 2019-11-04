@@ -1,7 +1,7 @@
 # Couchbase Java Travel-Sample Application
 This is a sample application for getting started with Couchbase Server 6.5. The application runs a single page UI
 and demonstrates SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 6.5.0
-together with Spring Boot, Angular2 and Bootstrap.
+together with Spring Boot, Vue and Bootstrap.
 
 The application is a flight planner that allows the user to search for and select a flight route (including the
 return flight) based on airports and dates. Airport selection is done dynamically using an Angular autocomplete box
@@ -59,13 +59,13 @@ Next, we need to set up the bucket, scope, and collections where the application
 Run the creation script like this:
 
 ```
-sh create-collections.sh
+sh create-collections.sh Administrator password localhost
 ```
 
 This script creates a bucket, a scope, and two collections with this structure:
 
-* default (bucket)
-  * larson-travel (scope)
+* travel-users (bucket)
+  * userData (scope)
     * users (collection)
     * flights (collection)
 

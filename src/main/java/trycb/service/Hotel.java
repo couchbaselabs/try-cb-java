@@ -14,6 +14,7 @@ import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.queries.ConjunctionQuery;
 import com.couchbase.client.java.search.result.SearchRow;
 import com.couchbase.client.java.search.result.SearchResult;
+import com.couchbase.client.java.search.
 import com.couchbase.client.java.json.JacksonTransformers;
 import com.couchbase.client.java.kv.LookupInResult;
 
@@ -63,10 +64,8 @@ public class Hotel {
 
         // SearchQuery query = new SearchQuery("hotels", fts)
         //         .limit(100);
-
         logQuery(fts.export().toString());
-        SearchResult result = cluster.searchQuery("hotels",fts);
-
+        SearchResult result = cluster.searchQuery("hotels",fts); // TODO: This line is borked. Fix it.
 
         //prepare the context to send to the app
         String ftsContext;
