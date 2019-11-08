@@ -28,6 +28,13 @@
 			<version>3.0.0-beta.1</version>
 	    </dependency>
 
+        <!-- Include Java EE API modules no longer in default Java 11 -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.2.11</version>
+        </dependency>
+
         <!-- tx for some data exceptions -->
         <dependency>
             <groupId>org.springframework</groupId>
