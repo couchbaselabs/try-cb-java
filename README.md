@@ -4,7 +4,7 @@ and demonstrates SQL for Documents (N1QL) and Full Text Search (FTS) querying ca
 together with Spring Boot, Vue and Bootstrap.
 
 The application is a flight planner that allows the user to search for and select a flight route (including the
-return flight) based on airports and dates. Airport selection is done dynamically using an Angular autocomplete box
+return flight) based on airports and dates. Airport selection is done dynamically using an autocomplete box
 bound to N1QL queries on the server side. After selecting a date, it then searches for applicable air flight routes from
 a previously populated database. An additional page allows users to search for Hotels using less structured keywords.
 
@@ -14,7 +14,7 @@ a previously populated database. An additional page allows users to search for H
 The following pieces need to be in place in order to run the application.
 
 1. Couchbase Server 6.5.0
-2. Java 8 or later
+2. Java 8 or later (Java 11 recommended)
 3. Maven 3 or later
 
 If you want to run the application from your IDE rather than from the command line you also need your IDE set up to
@@ -39,9 +39,7 @@ Then you need to enable the DP features, since the application will be working w
 couchbase-cli enable-developer-preview --enable -c http://localhost:8091 -u Administrator -p password
 ```
 
-The tool `couchbase-cli` is located in
-[the standard Couchbase installation directory](https://developer.couchbase.com/documentation/server/3.x/admin/Misc/install-location.html)
-of your OS.
+The tool `couchbase-cli` is located in [the standard Couchbase installation directory](https://developer.couchbase.com/documentation/server/3.x/admin/Misc/install-location.html) of your OS.
 
 To download the application you can clone the repository:
 
