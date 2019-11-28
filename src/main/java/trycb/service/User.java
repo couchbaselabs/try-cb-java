@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.couchbase.client.core.error.KeyNotFoundException;
+import com.couchbase.client.core.error.DocumentNotFoundException;
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.Collection;
 import com.couchbase.client.java.Scope;
@@ -45,7 +45,7 @@ public class User {
         GetResult doc;
         try {
             doc = scope.collection(USERS_COLLECTION_NAME).get(username);
-        } catch (KeyNotFoundException ex) {
+        } catch (DocumentNotFoundException ex) {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password: " + username);
         }
         JsonObject res = doc.contentAsObject();
@@ -82,6 +82,7 @@ public class User {
                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
                     narration);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new AuthenticationServiceException("There was an error creating account");
         }
     }
@@ -96,7 +97,7 @@ public class User {
         GetResult userDataFetch;
         try {
             userDataFetch = usersCollection.get(userId);
-        } catch (KeyNotFoundException ex) {
+        } catch (DocumentNotFoundException ex) {
             throw new IllegalStateException();
         }
         JsonObject userData = userDataFetch.contentAsObject();
@@ -148,7 +149,7 @@ public class User {
         GetResult doc;
         try {
             doc = users.get(username);
-        } catch (KeyNotFoundException ex) {
+        } catch (DocumentNotFoundException ex) {
             return Collections.emptyList();
         }
         JsonObject data = doc.contentAsObject();
@@ -165,7 +166,7 @@ public class User {
             GetResult res;
             try {
                 res = flightsCollection.get(flightId);
-            } catch (KeyNotFoundException ex) {
+            } catch (DocumentNotFoundException ex) {
                 throw new RuntimeException("Unable to retrieve flight id " + flightId);
             }
             Map<String, Object> flight = res.contentAsObject().toMap();

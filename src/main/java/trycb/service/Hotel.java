@@ -7,10 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.couchbase.client.core.deps.com.fasterxml.jackson.core.JsonProcessingException;
-import com.couchbase.client.core.error.KeyNotFoundException;
+import com.couchbase.client.core.error.DocumentNotFoundException;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.search.SearchQuery;
+import com.couchbase.client.java.search.SearchOptions;
 import com.couchbase.client.java.search.queries.ConjunctionQuery;
 import com.couchbase.client.java.search.result.SearchRow;
 import com.couchbase.client.java.search.result.SearchResult;
@@ -61,10 +62,9 @@ public class Hotel {
                 ));
         }
 
-        // SearchQuery query = new SearchQuery("hotels", fts)
-        //         .limit(100);
         logQuery(fts.export().toString());
-        SearchResult result = cluster.searchQuery("hotels",fts); // TODO: This line is borked. Fix it.
+        SearchOptions opts = SearchOptions.searchOptions().limit(100);
+        SearchResult result = cluster.searchQuery("hotels", fts, opts);
 
         //prepare the context to send to the app
         String ftsContext;
@@ -99,9 +99,9 @@ public class Hotel {
      * Extract a FTS result or throw if there is an issue.
      */
     private List<Map<String, Object>> extractResultOrThrow(SearchResult result) {
-        if (!result.metaData().status().isSuccess()) {
-            LOGGER.warn("Query returned with errors: " + result.errors());
-            throw new DataRetrievalFailureException("Query error: " + result.errors());
+        if (result.metaData().metrics().errorPartitionCount() > 0) {
+            LOGGER.warn("Query returned with errors: " + result.metaData().errors());
+            throw new DataRetrievalFailureException("Query error: " + result.metaData().errors());
         }
 
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
@@ -112,7 +112,7 @@ public class Hotel {
                 res = bucket.defaultCollection().lookupIn(row.id(),
                     Arrays.asList(get("country"), get("city"), get("state"), get("address"),
                         get("name"), get("description")));
-            } catch (KeyNotFoundException ex) {
+            } catch (DocumentNotFoundException ex) {
                 continue;
             }
 
