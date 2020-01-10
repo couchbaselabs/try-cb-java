@@ -24,30 +24,33 @@ public class Airport {
     /**
      * Find all airports.
      */
-    public static Result<List<Map<String, Object>>> findAll(final Cluster cluster, final String bucket, final String params) {
+    public static Result<List<Map<String, Object>>> findAll(final Cluster cluster, final String bucket, String params) {
         StringBuilder builder = new StringBuilder();
         builder.append("select airportname from `").append(bucket).append("` where ");
-
-        if (params.length() == 3) {
+        boolean sameCase = (params.equals(params.toUpperCase()) || params.equals(params.toLowerCase()));
+        if (params.length() == 3 && sameCase) {
             builder.append("faa = $val");
-        } else if (params.length() == 4 && (params.equals(params.toUpperCase()) || params.equals(params.toLowerCase()))) {
+            params = params.toUpperCase();
+        } else if (params.length() == 4 && sameCase) {
             builder.append("icao = $val");
+            params = params.toUpperCase();
         } else {
             // The airport name should start with the parameter value.
-            builder.append("POSITION(airportname, $val) = 0");
+            builder.append("POSITION(LOWER(airportname), $val) = 0");
+            params = params.toLowerCase();
         }
         String query = builder.toString();
 
         logQuery(query);
         QueryResult result = null;
         try {
-            result = cluster.query(query, QueryOptions.queryOptions().rawParams("$val", params));
+            result = cluster.query(query, QueryOptions.queryOptions().raw("$val", params));
         } catch (QueryException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error", e);
         }
 
-        List<JsonObject> resultObjects = result.allRowsAsObject();
+        List<JsonObject> resultObjects = result.rowsAsObject();
         List<Map<String, Object>> data = new LinkedList<Map<String, Object>>();
         for (JsonObject obj: resultObjects) {
             data.add(obj.toMap());

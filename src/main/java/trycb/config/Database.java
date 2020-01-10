@@ -51,7 +51,7 @@ public class Database {
     private String clientOrgScope;
 
     public @Bean Cluster loginCluster() {
-        return Cluster.connect("localhost", username, password);
+        return Cluster.connect(host, username, password);
     }
 
     public @Bean Bucket loginBucket() {

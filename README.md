@@ -1,10 +1,10 @@
 # Couchbase Java Travel-Sample Application
 This is a sample application for getting started with Couchbase Server 6.5. The application runs a single page UI
 and demonstrates SQL for Documents (N1QL) and Full Text Search (FTS) querying capabilities. It uses Couchbase Server 6.5.0
-together with Spring Boot, Angular2 and Bootstrap.
+together with Spring Boot, Vue and Bootstrap.
 
 The application is a flight planner that allows the user to search for and select a flight route (including the
-return flight) based on airports and dates. Airport selection is done dynamically using an Angular autocomplete box
+return flight) based on airports and dates. Airport selection is done dynamically using an autocomplete box
 bound to N1QL queries on the server side. After selecting a date, it then searches for applicable air flight routes from
 a previously populated database. An additional page allows users to search for Hotels using less structured keywords.
 
@@ -14,7 +14,7 @@ a previously populated database. An additional page allows users to search for H
 The following pieces need to be in place in order to run the application.
 
 1. Couchbase Server 6.5.0
-2. Java 8 or later
+2. Java 8 or later (Java 11 recommended)
 3. Maven 3 or later
 
 If you want to run the application from your IDE rather than from the command line you also need your IDE set up to
@@ -39,9 +39,7 @@ Then you need to enable the DP features, since the application will be working w
 couchbase-cli enable-developer-preview --enable -c http://localhost:8091 -u Administrator -p password
 ```
 
-The tool `couchbase-cli` is located in
-[the standard Couchbase installation directory](https://developer.couchbase.com/documentation/server/3.x/admin/Misc/install-location.html)
-of your OS.
+The tool `couchbase-cli` is located in [the standard Couchbase installation directory](https://developer.couchbase.com/documentation/server/3.x/admin/Misc/install-location.html) of your OS.
 
 To download the application you can clone the repository:
 
@@ -59,13 +57,13 @@ Next, we need to set up the bucket, scope, and collections where the application
 Run the creation script like this:
 
 ```
-sh create-collections.sh
+sh create-collections.sh Administrator password localhost
 ```
 
 This script creates a bucket, a scope, and two collections with this structure:
 
-* default (bucket)
-  * larson-travel (scope)
+* travel-users (bucket)
+  * userData (scope)
     * users (collection)
     * flights (collection)
 

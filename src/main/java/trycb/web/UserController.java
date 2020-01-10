@@ -84,7 +84,7 @@ public class UserController {
 
     @RequestMapping(value="/{username}/flights", method=RequestMethod.POST)
     public ResponseEntity<? extends IValue> book(@PathVariable("username") String username, @RequestBody String json,
-            @RequestHeader("Authentication") String authentication) {
+            @RequestHeader("Authorization") String authentication) {
         if (authentication == null || !authentication.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new Error("Bearer Authentication must be used"));
@@ -105,7 +105,7 @@ public class UserController {
     }
 
     @RequestMapping(value="/{username}/flights", method=RequestMethod.GET)
-    public Object booked(@PathVariable("username") String username, @RequestHeader("Authentication") String authentication) {
+    public Object booked(@PathVariable("username") String username, @RequestHeader("Authorization") String authentication) {
         if (authentication == null || !authentication.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new Error("Bearer Authentication must be used"));

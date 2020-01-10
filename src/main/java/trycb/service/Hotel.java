@@ -5,14 +5,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.couchbase.client.core.deps.com.fasterxml.jackson.core.JsonProcessingException;
+import com.couchbase.client.core.error.DocumentNotFoundException;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.search.SearchQuery;
+import com.couchbase.client.java.search.SearchOptions;
 import com.couchbase.client.java.search.queries.ConjunctionQuery;
-import com.couchbase.client.java.search.result.SearchQueryRow;
+import com.couchbase.client.java.search.result.SearchRow;
 import com.couchbase.client.java.search.result.SearchResult;
 import com.couchbase.client.java.json.JacksonTransformers;
 import com.couchbase.client.java.kv.LookupInResult;
@@ -61,20 +62,17 @@ public class Hotel {
                 ));
         }
 
-        SearchQuery query = new SearchQuery("hotels", fts)
-                .limit(100);
-
-        logQuery(query.export().toString());
-        SearchResult result = cluster.searchQuery(query);
-
+        logQuery(fts.export().toString());
+        SearchOptions opts = SearchOptions.searchOptions().limit(100);
+        SearchResult result = cluster.searchQuery("hotels", fts, opts);
 
         //prepare the context to send to the app
         String ftsContext;
         try {
             ftsContext = JacksonTransformers.MAPPER.writerWithDefaultPrettyPrinter().
-                    writeValueAsString(query.export());
+                    writeValueAsString(fts.export());
         } catch (JsonProcessingException e) {
-            ftsContext = query.export().toString();
+            ftsContext = fts.export().toString();
         }
         String subdocContext = "        Optional<LookupInResult> lookup = bucket.defaultCollection().lookupIn(row.id(),\n" +
                 "                Arrays.asList(get(\"country\"), get(\"city\"), get(\"state\"), get(\"address\"),\n" +
@@ -101,20 +99,22 @@ public class Hotel {
      * Extract a FTS result or throw if there is an issue.
      */
     private List<Map<String, Object>> extractResultOrThrow(SearchResult result) {
-        if (!result.meta().status().isSuccess()) {
-            LOGGER.warn("Query returned with errors: " + result.errors());
-            throw new DataRetrievalFailureException("Query error: " + result.errors());
+        if (result.metaData().metrics().errorPartitionCount() > 0) {
+            LOGGER.warn("Query returned with errors: " + result.metaData().errors());
+            throw new DataRetrievalFailureException("Query error: " + result.metaData().errors());
         }
 
         List<Map<String, Object>> content = new ArrayList<Map<String, Object>>();
-        for (SearchQueryRow row : result.rows()) {
-            Optional<LookupInResult> lookup = bucket.defaultCollection().lookupIn(row.id(),
-                    Arrays.asList(get("country"), get("city"), get("state"), get("address"),
-                            get("name"), get("description")));
+        for (SearchRow row : result.rows()) {
 
-            if (!lookup.isPresent())
+            LookupInResult res;
+            try {
+                res = bucket.defaultCollection().lookupIn(row.id(),
+                    Arrays.asList(get("country"), get("city"), get("state"), get("address"),
+                        get("name"), get("description")));
+            } catch (DocumentNotFoundException ex) {
                 continue;
-            LookupInResult res = lookup.get();
+            }
 
             Map<String, Object> map = new HashMap<String, Object>();
 
