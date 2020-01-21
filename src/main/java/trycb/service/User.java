@@ -104,7 +104,7 @@ public class User {
             throw new IllegalArgumentException("No flights in payload");
         }
 
-        JsonArray added = JsonArray.empty();
+        JsonArray added = JsonArray.create();
         JsonArray allBookedFlights = userData.getArray("flights");
         if(allBookedFlights == null) {
             allBookedFlights = JsonArray.create();
