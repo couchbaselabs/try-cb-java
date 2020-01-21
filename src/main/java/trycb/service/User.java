@@ -8,8 +8,9 @@ import java.util.UUID;
 
 import com.couchbase.client.core.error.DocumentNotFoundException;
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
+import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Collection;
-import com.couchbase.client.java.Scope;
+import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.json.JsonArray;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.GetResult;
@@ -41,10 +42,10 @@ public class User {
     /**
      * Try to log the given user in.
      */
-    public Map<String, Object> login(final Scope scope, final String username, final String password) {
+    public Map<String, Object> login(final Bucket bucket, final String username, final String password) {
         GetResult doc;
         try {
-            doc = scope.collection(USERS_COLLECTION_NAME).get(username);
+            doc = bucket.defaultCollection().get(username);
         } catch (DocumentNotFoundException ex) {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password: " + username);
         }
@@ -61,7 +62,7 @@ public class User {
     /**
      * Create a user.
      */
-    public Result<Map<String, Object>> createLogin(final Scope scope, final String username, final String password,
+    public Result<Map<String, Object>> createLogin(final Bucket bucket, final String username, final String password,
             DurabilityLevel expiry) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
         JsonObject doc = JsonObject.create()
@@ -72,12 +73,11 @@ public class User {
         if (expiry.ordinal() > 0) {
             options.durability(expiry);
         }
-        String narration = "User account created in document " + username + " in bucket " + scope.bucketName()
-                + " scope " + scope.name() + " collection " + USERS_COLLECTION_NAME
+        String narration = "User account created in document " + username + " in bucket " + bucket.name()
                 + (expiry.ordinal() > 0 ? ", with expiry of " + expiry.ordinal() + "s" : "");
 
         try {
-            scope.collection(USERS_COLLECTION_NAME).insert(username, doc);
+            bucket.defaultCollection().insert(username, doc);
             return Result.of(
                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
                     narration);
@@ -90,13 +90,11 @@ public class User {
     /**
      * Register a flight (or flights) for the given user.
      */
-    public Result<Map<String, Object>> registerFlightForUser(final Scope scope, final String username, final JsonArray newFlights) {
+    public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
         String userId = username;
-        Collection usersCollection = scope.collection(USERS_COLLECTION_NAME);
-        Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
         GetResult userDataFetch;
         try {
-            userDataFetch = usersCollection.get(userId);
+            userDataFetch = bucket.defaultCollection().get(userId);
         } catch (DocumentNotFoundException ex) {
             throw new IllegalStateException();
         }
@@ -117,13 +115,13 @@ public class User {
             JsonObject t = ((JsonObject) newFlight);
             t.put("bookedon", "try-cb-java");
             String flightId = UUID.randomUUID().toString();
-            flightsCollection.insert(flightId, t);
+            bucket.defaultCollection().insert(flightId, t);
             allBookedFlights.add(flightId);
             added.add(t);
         }
 
         userData.put("flights", allBookedFlights);
-        usersCollection.upsert(userId, userData);
+        bucket.defaultCollection().upsert(userId, userData);
 
         JsonObject responseData = JsonObject.create()
             .put("added", added);
@@ -144,11 +142,10 @@ public class User {
         }
     }
 
-    public List<Map<String, Object>> getFlightsForUser(final Scope scope, final String username) {
-        Collection users = scope.collection(USERS_COLLECTION_NAME);
+    public List<Map<String, Object>> getFlightsForUser(final Bucket bucket, final String username) {
         GetResult doc;
         try {
-            doc = users.get(username);
+            doc = bucket.defaultCollection().get(username);
         } catch (DocumentNotFoundException ex) {
             return Collections.emptyList();
         }
@@ -159,7 +156,7 @@ public class User {
         }
 
         // The "flights" array contains flight ids. Convert them to actual objects.
-        Collection flightsCollection = scope.collection(FLIGHTS_COLLECTION_NAME);
+        Collection flightsCollection = bucket.defaultCollection();
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         for (int i = 0; i < flights.size(); i++) {
             String flightId = flights.getString(i);

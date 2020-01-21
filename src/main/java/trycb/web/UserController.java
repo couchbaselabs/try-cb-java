@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
-import com.couchbase.client.java.Scope;
+import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.json.JsonObject;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ import trycb.service.User;
 @RequestMapping("/api/user")
 public class UserController {
 
-    private final Scope scope;
+    private final Bucket bucket;
     private final User userService;
     private final TokenService jwtService;
 
@@ -39,8 +39,8 @@ public class UserController {
     private int expiry;
 
     @Autowired
-    public UserController(@Qualifier("clientOrgScope") Scope scope, User userService, TokenService jwtService) {
-        this.scope = scope;
+    public UserController(Bucket bucket, User userService, TokenService jwtService) {
+        this.bucket = bucket;
         this.userService = userService;
         this.jwtService = jwtService;
     }
@@ -54,7 +54,7 @@ public class UserController {
         }
 
         try {
-            Map<String, Object> data = userService.login(scope, user, password);
+            Map<String, Object> data = userService.login(bucket, user, password);
             return ResponseEntity.ok(Result.of(data));
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -69,7 +69,7 @@ public class UserController {
     public ResponseEntity<? extends IValue> createLogin(@RequestBody String json) {
         JsonObject jsonData = JsonObject.fromJson(json);
         try {
-            Result<Map<String, Object>> result = userService.createLogin(scope, jsonData.getString("user"),
+            Result<Map<String, Object>> result = userService.createLogin(bucket, jsonData.getString("user"),
                     jsonData.getString("password"), DurabilityLevel.values()[expiry]);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(result);
@@ -92,7 +92,7 @@ public class UserController {
         JsonObject jsonData = JsonObject.fromJson(json);
         try {
             jwtService.verifyAuthenticationHeader(authentication, username);
-            Result<Map<String, Object>> result = userService.registerFlightForUser(scope, username, jsonData.getArray("flights"));
+            Result<Map<String, Object>> result = userService.registerFlightForUser(bucket, username, jsonData.getArray("flights"));
             return ResponseEntity.accepted()
                     .body(result);
         } catch (IllegalStateException e) {
@@ -114,7 +114,7 @@ public class UserController {
         try {
             jwtService.verifyAuthenticationHeader(authentication, username);
 
-            List<Map<String, Object>> flights = userService.getFlightsForUser(scope, username);
+            List<Map<String, Object>> flights = userService.getFlightsForUser(bucket, username);
             return ResponseEntity.ok(Result.of(flights));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
