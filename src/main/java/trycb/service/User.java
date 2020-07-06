@@ -77,7 +77,7 @@ public class User {
                 + (expiry.ordinal() > 0 ? ", with expiry of " + expiry.ordinal() + "s" : "");
 
         try {
-            bucket.defaultCollection().insert(username, doc);
+            bucket.defaultCollection().insert(username, doc, options);
             return Result.of(
                     JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
                     narration);
