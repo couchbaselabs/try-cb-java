@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    # environment:
+    #   - CB_HOST
+    #   - CB_USER
+    #   - CB_PSWD
+    # command: $CB_HOST $CB_USER $CB_PSWD
+    volumes:
+      - .:/app
+    container_name: try-cb-api
+  
+  frontend:
+      build: "https://github.com/osfameron/try-cb-frontend-v2.git#DOC-8135-travel-sample"
+      depends_on:
+        backend:
+          condition: service_started
+      ports:
+        - 8081:8081
+      container_name: try-cb-fe
+      entrypoint: ["wait-for-it", "backend:8080", "--timeout=0", "--", "npm", "run", "serve"]
+
+  db:
+    image: couchbase/server-sandbox:7.0.0-beta
+    ports:
+      - "8091-8095:8091-8095"
+      - "11210:11210"
+    expose: # expose ports 8091 & 8094 to other containers (mainly for backend)
+      - "8091"
+      - "8094"
+    healthcheck: # checks couchbase server is up
+      test: ["CMD", "curl", "-v", "http://localhost:8091/pools"]
+      interval: 20s
+      timeout: 20s
+      retries: 2
+    container_name: couchbase-sandbox-7.0.0-beta
