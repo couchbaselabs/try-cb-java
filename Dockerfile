@@ -18,4 +18,4 @@ RUN mvn clean install
 EXPOSE 8080
 
 # Set the entrypoint
-ENTRYPOINT ["mvn", "spring-boot:run"]
+ENTRYPOINT ["./entrypoint.sh"]

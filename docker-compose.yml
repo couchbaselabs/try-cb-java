@@ -8,17 +8,17 @@ services:
         condition: service_healthy
     ports:
       - 8080:8080
-    # environment:
-    #   - CB_HOST
-    #   - CB_USER
-    #   - CB_PSWD
-    # command: $CB_HOST $CB_USER $CB_PSWD
+    environment:
+      - CB_HOST
+      - CB_USER
+      - CB_PSWD
+    command: $CB_HOST $CB_USER $CB_PSWD
     volumes:
       - .:/app
     container_name: try-cb-api
   
   frontend:
-      build: "https://github.com/osfameron/try-cb-frontend-v2.git#DOC-8135-travel-sample"
+      build: "https://github.com/couchbaselabs/try-cb-frontend-v2.git#7.0"
       depends_on:
         backend:
           condition: service_started
