@@ -1,20 +1,18 @@
 package trycb.model;
 
 /**
- * A standardized error format for failing responses, that the frontend application can interpret
- * for all endpoints.
- *
- * @author Simon Baslé
+ * A standardized error format for failing responses, that the frontend
+ * application can interpret for all endpoints.
  */
 public class Error implements IValue {
 
-    private final String failure;
+    private final String message;
 
-    public Error(String failure) {
-        this.failure = failure;
+    public Error(String message) {
+        this.message = message;
     }
 
-    public String getFailure() {
-        return failure;
+    public String getMessage() {
+        return message;
     }
 }

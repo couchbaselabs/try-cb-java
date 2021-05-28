@@ -1,32 +1,33 @@
 package trycb.service;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import com.couchbase.client.core.error.QueryException;
 import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.query.QueryOptions;
 import com.couchbase.client.java.query.QueryResult;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
-import trycb.model.Result;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import trycb.model.Result;
 
 @Service
 public class Airport {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Airport.class);
 
-
     /**
      * Find all airports.
      */
     public static Result<List<Map<String, Object>>> findAll(final Cluster cluster, final String bucket, String params) {
         StringBuilder builder = new StringBuilder();
-        builder.append("select airportname from `").append(bucket).append("` where ");
+        builder.append("SELECT airportname FROM `").append(bucket).append("`.inventory.airport WHERE ");
         boolean sameCase = (params.equals(params.toUpperCase()) || params.equals(params.toLowerCase()));
         if (params.length() == 3 && sameCase) {
             builder.append("faa = $val");
@@ -52,10 +53,12 @@ public class Airport {
 
         List<JsonObject> resultObjects = result.rowsAsObject();
         List<Map<String, Object>> data = new LinkedList<Map<String, Object>>();
-        for (JsonObject obj: resultObjects) {
+        for (JsonObject obj : resultObjects) {
             data.add(obj.toMap());
         }
-        return Result.of(data, query);
+
+        String querytype = "N1QL query - scoped to inventory: ";
+        return Result.of(data, querytype, query);
     }
 
     /**
