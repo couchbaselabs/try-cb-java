@@ -1,5 +1,6 @@
 package trycb.web;
 
+import com.couchbase.client.java.Cluster;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -9,19 +10,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.couchbase.client.java.Cluster;
-
 import trycb.model.Error;
 import trycb.model.IValue;
 import trycb.service.Hotel;
 
 @RestController
-@RequestMapping("/api/hotel")
+@RequestMapping("/api/hotels")
 public class HotelController {
 
     private final Cluster cluster;
     private final Hotel hotelService;
-
 
     @Autowired
     public HotelController(Cluster cluster, Hotel hotelService) {
@@ -29,8 +27,9 @@ public class HotelController {
         this.hotelService = hotelService;
     }
 
-    @RequestMapping(value="/{description}/{location}/", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<? extends IValue> findHotelsByDescriptionAndLocation(@PathVariable("location") String location, @PathVariable("description") String desc) {
+    @RequestMapping(value = "/{description}/{location}/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<? extends IValue> findHotelsByDescriptionAndLocation(
+            @PathVariable("location") String location, @PathVariable("description") String desc) {
         try {
             return ResponseEntity.ok(hotelService.findHotels(cluster, location, desc));
         } catch (Exception e) {
@@ -38,7 +37,7 @@ public class HotelController {
         }
     }
 
-    @RequestMapping(value="/{description}/", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/{description}/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<? extends IValue> findHotelsByDescription(@PathVariable("description") String desc) {
         try {
             return ResponseEntity.ok(hotelService.findHotels(cluster, desc));
@@ -47,7 +46,7 @@ public class HotelController {
         }
     }
 
-    @RequestMapping(value="/", method=RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<? extends IValue> findAllHotels() {
         try {
             return ResponseEntity.ok(hotelService.findAllHotels(cluster));
