@@ -64,6 +64,7 @@
 
     <!-- spring boot maven plugin for command line utils -->
     <build>
+        <finalName>try-cb-java</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

@@ -11,11 +11,11 @@ RUN apt-get update && apt-get install -y \
 
 ADD . /app
 
-# Install project dependencies
+# Install project dependencies and generate jar file
 RUN mvn clean install
 
 # Expose ports
 EXPOSE 8080
 
 # Set the entrypoint
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["./wait-for-couchbase.sh", "java", "-jar", "target/try-cb-java.jar"]
