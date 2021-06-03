@@ -4,6 +4,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
+/**
+ * Trace incoming HTTP requests using Spring Boot CommonsRequestLoggingFilter.
+ * This allows us to see incoming request logs when running the application.
+ */
 @Configuration
 public class Request {
 
