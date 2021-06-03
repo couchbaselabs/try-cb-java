@@ -1,5 +1,7 @@
 package trycb.service;
 
+import static com.couchbase.client.java.kv.InsertOptions.insertOptions;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +12,7 @@ import com.couchbase.client.core.error.DocumentNotFoundException;
 import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Collection;
-import com.couchbase.client.java.Bucket;
+import com.couchbase.client.java.Scope;
 import com.couchbase.client.java.json.JsonArray;
 import com.couchbase.client.java.json.JsonObject;
 import com.couchbase.client.java.kv.GetResult;
@@ -21,80 +23,85 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+
 import trycb.model.Result;
 
-import static com.couchbase.client.java.kv.InsertOptions.insertOptions;
-
-
 @Service
-public class User {
+public class TenantUser {
 
     private final TokenService jwtService;
 
     @Autowired
-    public User(TokenService jwtService) {
+    public TenantUser(TokenService jwtService) {
         this.jwtService = jwtService;
     }
 
     static final String USERS_COLLECTION_NAME = "users";
-    static final String FLIGHTS_COLLECTION_NAME = "flights";
+    static final String BOOKINGS_COLLECTION_NAME = "bookings";
 
     /**
-     * Try to log the given user in.
+     * Try to log the given tenant user in.
      */
-    public Map<String, Object> login(final Bucket bucket, final String username, final String password) {
+    public Result<Map<String, Object>> login(final Bucket bucket, final String tenant, final String username,
+            final String password) {
+        Scope scope = bucket.scope(tenant);
+        Collection collection = scope.collection(USERS_COLLECTION_NAME);
+        String queryType = String.format("KV get - scoped to %s.users: for password field in document %s", scope.name(),
+                username);
+
         GetResult doc;
         try {
-            doc = bucket.defaultCollection().get(username);
+            doc = collection.get(username);
         } catch (DocumentNotFoundException ex) {
-            throw new AuthenticationCredentialsNotFoundException("Bad Username or Password: " + username);
+            throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
         }
         JsonObject res = doc.contentAsObject();
-        if(BCrypt.checkpw(password, res.getString("password"))) {
-            return JsonObject.create()
-                .put("token", jwtService.buildToken(username))
-                .toMap();
+        if (BCrypt.checkpw(password, res.getString("password"))) {
+            Map<String, Object> data = JsonObject.create().put("token", jwtService.buildToken(username)).toMap();
+            return Result.of(data, queryType);
         } else {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
         }
     }
 
     /**
-     * Create a user.
+     * Create a tenant user.
      */
-    public Result<Map<String, Object>> createLogin(final Bucket bucket, final String username, final String password,
-            DurabilityLevel expiry) {
+    public Result<Map<String, Object>> createLogin(final Bucket bucket, final String tenant, final String username,
+            final String password, DurabilityLevel expiry) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
-        JsonObject doc = JsonObject.create()
-            .put("type", "user")
-            .put("name", username)
-            .put("password", passHash);
+        JsonObject doc = JsonObject.create().put("type", "user").put("name", username).put("password", passHash);
         InsertOptions options = insertOptions();
         if (expiry.ordinal() > 0) {
             options.durability(expiry);
         }
-        String narration = "User account created in document " + username + " in bucket " + bucket.name()
-                + (expiry.ordinal() > 0 ? ", with expiry of " + expiry.ordinal() + "s" : "");
 
+        Scope scope = bucket.scope(tenant);
+        Collection collection = scope.collection(USERS_COLLECTION_NAME);
+        String queryType = String.format("KV insert - scoped to %s.users: document %s", scope.name(), username);
         try {
-            bucket.defaultCollection().insert(username, doc, options);
-            return Result.of(
-                    JsonObject.create().put("token", jwtService.buildToken(username)).toMap(),
-                    narration);
+            collection.insert(username, doc, options);
+            Map<String, Object> data = JsonObject.create().put("token", jwtService.buildToken(username)).toMap();
+            return Result.of(data, queryType);
         } catch (Exception e) {
             e.printStackTrace();
             throw new AuthenticationServiceException("There was an error creating account");
         }
     }
 
-    /**
-     * Register a flight (or flights) for the given user.
+    /*
+     * Register a flight (or flights) for the given tenant user.
      */
-    public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String username, final JsonArray newFlights) {
+    public Result<Map<String, Object>> registerFlightForUser(final Bucket bucket, final String tenant,
+            final String username, final JsonArray newFlights) {
         String userId = username;
         GetResult userDataFetch;
+        Scope scope = bucket.scope(tenant);
+        Collection usersCollection = scope.collection(USERS_COLLECTION_NAME);
+        Collection bookingsCollection = scope.collection(BOOKINGS_COLLECTION_NAME);
+
         try {
-            userDataFetch = bucket.defaultCollection().get(userId);
+            userDataFetch = usersCollection.get(userId);
         } catch (DocumentNotFoundException ex) {
             throw new IllegalStateException();
         }
@@ -106,7 +113,7 @@ public class User {
 
         JsonArray added = JsonArray.create();
         JsonArray allBookedFlights = userData.getArray("flights");
-        if(allBookedFlights == null) {
+        if (allBookedFlights == null) {
             allBookedFlights = JsonArray.create();
         }
 
@@ -115,18 +122,19 @@ public class User {
             JsonObject t = ((JsonObject) newFlight);
             t.put("bookedon", "try-cb-java");
             String flightId = UUID.randomUUID().toString();
-            bucket.defaultCollection().insert(flightId, t);
+            bookingsCollection.insert(flightId, t);
             allBookedFlights.add(flightId);
             added.add(t);
         }
 
         userData.put("flights", allBookedFlights);
-        bucket.defaultCollection().upsert(userId, userData);
+        usersCollection.upsert(userId, userData);
 
-        JsonObject responseData = JsonObject.create()
-            .put("added", added);
+        JsonObject responseData = JsonObject.create().put("added", added);
 
-        return Result.of(responseData.toMap(), "Booked flight in Couchbase document " + userId);
+        String queryType = String.format("KV update - scoped to %s.user: for bookings field in document %s",
+                scope.name(), username);
+        return Result.of(responseData.toMap(), queryType);
     }
 
     private static void checkFlight(Object f) {
@@ -134,42 +142,47 @@ public class User {
             throw new IllegalArgumentException("Each flight must be a non-null object");
         }
         JsonObject flight = (JsonObject) f;
-        if (!flight.containsKey("name")
-                || !flight.containsKey("date")
-                || !flight.containsKey("sourceairport")
+        if (!flight.containsKey("name") || !flight.containsKey("date") || !flight.containsKey("sourceairport")
                 || !flight.containsKey("destinationairport")) {
             throw new IllegalArgumentException("Malformed flight inside flights payload");
         }
     }
 
-    public List<Map<String, Object>> getFlightsForUser(final Bucket bucket, final String username) {
-        GetResult doc;
+    public Result<List<Map<String, Object>>> getFlightsForUser(final Bucket bucket, final String tenant,
+            final String username) {
+        GetResult userDoc;
+        Scope scope = bucket.scope(tenant);
+        Collection usersCollection = scope.collection(USERS_COLLECTION_NAME);
+        Collection bookingsCollection = scope.collection(BOOKINGS_COLLECTION_NAME);
+
         try {
-            doc = bucket.defaultCollection().get(username);
+            userDoc = usersCollection.get(username);
         } catch (DocumentNotFoundException ex) {
-            return Collections.emptyList();
+            return Result.of(Collections.emptyList());
         }
-        JsonObject data = doc.contentAsObject();
-        JsonArray flights = data.getArray("flights");
+        JsonObject userData = userDoc.contentAsObject();
+        JsonArray flights = userData.getArray("flights");
         if (flights == null) {
-            return Collections.emptyList();
+            return Result.of(Collections.emptyList());
         }
 
         // The "flights" array contains flight ids. Convert them to actual objects.
-        Collection flightsCollection = bucket.defaultCollection();
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
         for (int i = 0; i < flights.size(); i++) {
             String flightId = flights.getString(i);
             GetResult res;
             try {
-                res = flightsCollection.get(flightId);
+                res = bookingsCollection.get(flightId);
             } catch (DocumentNotFoundException ex) {
                 throw new RuntimeException("Unable to retrieve flight id " + flightId);
             }
             Map<String, Object> flight = res.contentAsObject().toMap();
             results.add(flight);
         }
-        return results;
+
+        String queryType = String.format("KV get - scoped to %s.user: for %d bookings in document %s", scope.name(),
+                results.size(), username);
+        return Result.of(results, queryType);
     }
 
 }
