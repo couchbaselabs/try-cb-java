@@ -38,12 +38,12 @@ public class FlightPath {
         builder.append("SELECT faa as toAirport ");
         builder.append("FROM `").append(bucket).append("`.inventory.airport ");
         builder.append("WHERE airportname = $to");
-        String query = builder.toString();
+        String unionQuery = builder.toString();
 
-        logQuery(query);
+        logQuery(unionQuery);
         QueryResult result = null;
         try {
-            result = cluster.query(query, QueryOptions.queryOptions().raw("$from", from).raw("$to", to));
+            result = cluster.query(unionQuery, QueryOptions.queryOptions().raw("$from", from).raw("$to", to));
         } catch (QueryException e) {
             LOGGER.warn("Query failed with exception: " + e);
             throw new DataRetrievalFailureException("Query error: " + result);
@@ -95,7 +95,7 @@ public class FlightPath {
         }
 
         String querytype = "N1QL query - scoped to inventory: ";
-        return Result.of(data, querytype, joinQuery);
+        return Result.of(data, querytype, unionQuery, joinQuery);
     }
 
     /**
