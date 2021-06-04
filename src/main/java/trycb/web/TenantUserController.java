@@ -88,7 +88,7 @@ public class TenantUserController {
             jwtService.verifyAuthenticationHeader(authentication, username);
             Result<Map<String, Object>> result = tenantUserService.registerFlightForUser(bucket, tenant, username,
                     jsonData.getArray("flights"));
-            return ResponseEntity.accepted().body(result);
+            return ResponseEntity.ok().body(result);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Error("Forbidden, you can't book for this user"));

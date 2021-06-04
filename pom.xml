@@ -51,6 +51,13 @@
             <artifactId>jjwt</artifactId>
             <version>0.6.0</version>
         </dependency>
+
+        <!-- swagger ui support with springdoc -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.5.9</version>
+        </dependency>
     </dependencies>
 
     <!-- for couchbase prereleases, use the couchbase repo -->
