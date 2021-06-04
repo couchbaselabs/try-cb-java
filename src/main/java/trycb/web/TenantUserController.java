@@ -6,6 +6,8 @@ import com.couchbase.client.core.msg.kv.DurabilityLevel;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.json.JsonObject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,8 @@ public class TenantUserController {
     private final TenantUser tenantUserService;
     private final TokenService jwtService;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(TenantUserController.class);
+
     @Value("${storage.expiry:0}")
     private int expiry;
 
@@ -55,8 +59,10 @@ public class TenantUserController {
         try {
             return ResponseEntity.ok(tenantUserService.login(bucket, tenant, user, password));
         } catch (AuthenticationException e) {
+            LOGGER.error("Authentication failed with exception", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new Error(e.getMessage()));
         } catch (Exception e) {
+            LOGGER.error("Failed with exception", e);
             return ResponseEntity.status(500).body(new Error(e.getMessage()));
         }
     }
@@ -70,8 +76,10 @@ public class TenantUserController {
                     jsonData.getString("user"), jsonData.getString("password"), DurabilityLevel.values()[expiry]);
             return ResponseEntity.status(HttpStatus.CREATED).body(result);
         } catch (AuthenticationServiceException e) {
+            LOGGER.error("Authentication failed with exception", e);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new Error(e.getMessage()));
         } catch (Exception e) {
+            LOGGER.error("Failed with exception", e);
             return ResponseEntity.status(500).body(new Error(e.getMessage()));
         }
     }
@@ -90,9 +98,11 @@ public class TenantUserController {
                     jsonData.getArray("flights"));
             return ResponseEntity.ok().body(result);
         } catch (IllegalStateException e) {
+            LOGGER.error("Failed with invalid state exception", e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Error("Forbidden, you can't book for this user"));
         } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed with invalid argument exception", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Error(e.getMessage()));
         }
     }
@@ -108,9 +118,11 @@ public class TenantUserController {
             jwtService.verifyAuthenticationHeader(authentication, username);
             return ResponseEntity.ok(tenantUserService.getFlightsForUser(bucket, tenant, username));
         } catch (IllegalStateException e) {
+            LOGGER.error("Failed with invalid state exception", e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Error("Forbidden, you don't have access to this cart"));
         } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed with invalid argument exception", e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Error("Forbidden, you don't have access to this cart"));
         }

@@ -3,6 +3,8 @@ package trycb.web;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,8 @@ public class AirportController {
     private final Cluster cluster;
     private final Bucket bucket;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AirportController.class);
+
     @Autowired
     public AirportController(Cluster cluster, Bucket bucket) {
         this.cluster = cluster;
@@ -32,8 +36,8 @@ public class AirportController {
         try {
             return ResponseEntity.ok(Airport.findAll(cluster, bucket.name(), search));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new Error(e.getMessage()));
+            LOGGER.error("Failed with exception blah", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Error(e.getMessage()));
         }
     }
 
