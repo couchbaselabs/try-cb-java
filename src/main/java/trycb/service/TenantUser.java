@@ -57,7 +57,9 @@ public class TenantUser {
         }
         JsonObject res = doc.contentAsObject();
         if (BCrypt.checkpw(password, res.getString("password"))) {
-            Map<String, Object> data = JsonObject.create().put("token", jwtService.buildToken(username)).toMap();
+            Map<String, Object> data = JsonObject.create()
+                    .put("token", jwtService.buildToken(username))
+                    .toMap();
             return Result.of(data, queryType);
         } else {
             throw new AuthenticationCredentialsNotFoundException("Bad Username or Password");
@@ -70,7 +72,10 @@ public class TenantUser {
     public Result<Map<String, Object>> createLogin(final Bucket bucket, final String tenant, final String username,
             final String password, DurabilityLevel expiry) {
         String passHash = BCrypt.hashpw(password, BCrypt.gensalt());
-        JsonObject doc = JsonObject.create().put("type", "user").put("name", username).put("password", passHash);
+        JsonObject doc = JsonObject.create()
+                .put("type", "user")
+                .put("name", username)
+                .put("password", passHash);
         InsertOptions options = insertOptions();
         if (expiry.ordinal() > 0) {
             options.durability(expiry);

@@ -48,14 +48,19 @@ public class Hotel {
         ConjunctionQuery fts = SearchQuery.conjuncts(SearchQuery.term("hotel").field("type"));
 
         if (location != null && !location.isEmpty() && !"*".equals(location)) {
-            fts.and(SearchQuery.disjuncts(SearchQuery.matchPhrase(location).field("country"),
-                    SearchQuery.matchPhrase(location).field("city"), SearchQuery.matchPhrase(location).field("state"),
-                    SearchQuery.matchPhrase(location).field("address")));
+            fts.and(SearchQuery.disjuncts(
+                    SearchQuery.matchPhrase(location).field("country"),
+                    SearchQuery.matchPhrase(location).field("city"),
+                    SearchQuery.matchPhrase(location).field("state"),
+                    SearchQuery.matchPhrase(location).field("address")
+            ));
         }
 
         if (description != null && !description.isEmpty() && !"*".equals(description)) {
-            fts.and(SearchQuery.disjuncts(SearchQuery.matchPhrase(description).field("description"),
-                    SearchQuery.matchPhrase(description).field("name")));
+            fts.and(SearchQuery.disjuncts(
+                    SearchQuery.matchPhrase(description).field("description"),
+                    SearchQuery.matchPhrase(description).field("name")
+            ));
         }
 
         logQuery(fts.export().toString());
@@ -96,7 +101,8 @@ public class Hotel {
             try {
                 Scope scope = bucket.scope("inventory");
                 Collection collection = scope.collection("hotel");
-                res = collection.lookupIn(row.id(), Arrays.asList(get("country"), get("city"), get("state"),
+                res = collection.lookupIn(row.id(),
+                        Arrays.asList(get("country"), get("city"), get("state"),
                         get("address"), get("name"), get("description")));
             } catch (DocumentNotFoundException ex) {
                 continue;
