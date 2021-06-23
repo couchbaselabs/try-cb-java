@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.couchbase.example</groupId>
     <artifactId>try-cb-java</artifactId>
-    <version>2.2.0</version>
+    <version>2.3.0</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.5.RELEASE</version>
+        <version>2.5.0</version>
     </parent>
 
     <dependencies>
@@ -22,11 +20,11 @@
         </dependency>
 
         <!-- the couchbase java sdk -->
-	    <dependency>
-			<groupId>com.couchbase.client</groupId>
-			<artifactId>java-client</artifactId>
-			<version>3.0.0</version>
-	    </dependency>
+        <dependency>
+            <groupId>com.couchbase.client</groupId>
+            <artifactId>java-client</artifactId>
+            <version>3.1.5</version>
+        </dependency>
 
         <!-- Include Java EE API modules no longer in default Java 11 -->
         <dependency>
@@ -43,8 +41,8 @@
 
         <!-- security for bcrypt support -->
         <dependency>
-        	<groupId>org.springframework.security</groupId>
-        	<artifactId>spring-security-core</artifactId>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
         </dependency>
 
         <!-- json web token support -->
@@ -53,44 +51,59 @@
             <artifactId>jjwt</artifactId>
             <version>0.6.0</version>
         </dependency>
+
+        <!-- swagger ui support with springdoc -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.5.9</version>
+        </dependency>
+
+        <!-- spring-boot dev tools to enable hot-reloading -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
     <!-- for couchbase prereleases, use the couchbase repo -->
     <repositories>
-	    <repository>
-	      <id>couchbase</id>
-	      <name>Couchbase Preview Repository</name>
-	      <url>http://files.couchbase.com/maven2</url>
-	    </repository>
+        <repository>
+            <id>couchbase</id>
+            <name>Couchbase Preview Repository</name>
+            <url>http://files.couchbase.com/maven2</url>
+        </repository>
     </repositories>
 
     <!-- spring boot maven plugin for command line utils -->
     <build>
+        <finalName>try-cb-java</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-        <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>docker-maven-plugin</artifactId>
-            <version>0.4.11</version>
-            <configuration>
-		    <imageName>trycb/java</imageName>
-                <dockerDirectory>src/main/docker</dockerDirectory>
-                <buildArgs>
-                    <finalName>${project.build.finalName}.jar</finalName>
-                </buildArgs>
-                <resources>
-                    <resource>
-                        <targetPath>/</targetPath>
-                        <directory>${project.build.directory}</directory>
-                        <include>${project.build.finalName}.jar</include>
-                    </resource>
-                </resources>
-            </configuration>
-        </plugin>
-      </plugins>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.4.11</version>
+                <configuration>
+                    <imageName>trycb/java</imageName>
+                    <dockerDirectory>src/main/docker</dockerDirectory>
+                    <buildArgs>
+                        <finalName>${project.build.finalName}.jar</finalName>
+                    </buildArgs>
+                    <resources>
+                        <resource>
+                            <targetPath>/</targetPath>
+                            <directory>${project.build.directory}</directory>
+                            <include>${project.build.finalName}.jar</include>
+                        </resource>
+                    </resources>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 </project>
