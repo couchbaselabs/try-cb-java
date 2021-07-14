@@ -58,13 +58,6 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.5.9</version>
         </dependency>
-
-        <!-- spring-boot dev tools to enable hot-reloading -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 
     <!-- for couchbase prereleases, use the couchbase repo -->

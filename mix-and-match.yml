@@ -10,8 +10,6 @@ services:
       - CB_USER
       - CB_PSWD
     command: --storage.host=${CB_HOST} --storage.username=${CB_USER} --storage.password=${CB_PSWD}
-    volumes:
-      - .:/app
     container_name: try-cb-api-mm
 
   frontend:
