@@ -19,11 +19,11 @@ services:
       entrypoint: ["wait-for-it", "backend:8080", "--timeout=400", "--strict", "--", "npm", "run", "serve"]
 
   db:
-    image: couchbase/server-sandbox:7.0.0-beta
+    image: couchbase/server-sandbox:7.0.0
     ports:
       - "8091-8095:8091-8095"
       - "11210:11210"
     expose: # expose ports 8091 & 8094 to other containers (mainly for backend)
       - "8091"
       - "8094"
-    container_name: couchbase-sandbox-7.0.0-beta
+    container_name: couchbase-sandbox-7.0.0
