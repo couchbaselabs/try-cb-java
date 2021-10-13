@@ -27,3 +27,13 @@ services:
       - "8091"
       - "8094"
     container_name: couchbase-sandbox-7.0.0
+
+  test:
+    build: "https://github.com/couchbaselabs/try-cb-test.git#main"
+    depends_on:
+      - backend
+    environment:
+      BACKEND_BASE_URL: http://backend:8080
+    entrypoint: ["wait-for-it", "backend:8080", "--timeout=400", "--strict", "--", "bats", "travel-sample-backend.bats"]
+    profiles:
+      - test

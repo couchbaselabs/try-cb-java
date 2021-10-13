@@ -137,7 +137,7 @@ public class TenantUser {
 
         JsonObject responseData = JsonObject.create().put("added", added);
 
-        String queryType = String.format("KV update - scoped to %s.user: for bookings field in document %s",
+        String queryType = String.format("KV update - scoped to %s.users: for bookings field in document %s",
                 scope.name(), username);
         return Result.of(responseData.toMap(), queryType);
     }
@@ -149,7 +149,7 @@ public class TenantUser {
         JsonObject flight = (JsonObject) f;
         if (!flight.containsKey("name") || !flight.containsKey("date") || !flight.containsKey("sourceairport")
                 || !flight.containsKey("destinationairport")) {
-            throw new IllegalArgumentException("Malformed flight inside flights payload");
+            throw new IllegalArgumentException("Malformed flight inside flights payload" + flight.toString());
         }
     }
 
@@ -185,7 +185,7 @@ public class TenantUser {
             results.add(flight);
         }
 
-        String queryType = String.format("KV get - scoped to %s.user: for %d bookings in document %s", scope.name(),
+        String queryType = String.format("KV get - scoped to %s.users: for %d bookings in document %s", scope.name(),
                 results.size(), username);
         return Result.of(results, queryType);
     }
