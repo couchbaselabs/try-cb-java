@@ -195,9 +195,26 @@ run it with:
 To run the frontend components manually without Docker, follow the guide
 [here](https://github.com/couchbaselabs/try-cb-frontend-v2)
 
-## REST API reference
+## REST API reference, and tests.
 
-We've integrated Swagger/OpenApi version 3 documentation which can be accessed on the backend at `http://localhost:8080/apidocs`
+All the travel-sample apps conform to the same interface, which means that they can all be used with the same database configuration and Vue.js frontend.
+
+We've integrated Swagger/OpenApi version 3 documentation which can be accessed on the backend at `http://localhost:8080/apidocs` once you have started the app.
+
+(You can also view a read-only version at https://docs.couchbase.com/java-sdk/current/hello-world/sample-application.html#)
+
+To further ensure that every app conforms to the API, we have a [test suite][try-cb-test], which you can simply run with the command:
+
+```
+docker-compose --profile test up test
+```
+
+If you are running locally though, with a view to extending or modifying the travel-sample app, you will likely want to be able to make changes to both the code and the tests in parallel.
+
+ * Start the backend server locally, for example using "Running the Java API application manually" above.
+ * Check out the [test suite][try-cb-test] repo in a separate working directory, and run the tests manually, as per the instructions.
+
+Check the test repo for details on how to run locally.
 
 [Couchbase Server]: https://www.couchbase.com/
 [Java SDK]: https://docs.couchbase.com/java-sdk/current/hello-world/overview.html
@@ -206,3 +223,4 @@ We've integrated Swagger/OpenApi version 3 documentation which can be accessed o
 [Swagger]: https://swagger.io/resources/open-api/
 [Vue]: https://vuejs.org/
 [Bootstrap]: https://getbootstrap.com/
+[try-cb-test]: https://github.com/couchbaselabs/try-cb-test/
