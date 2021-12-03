@@ -21,8 +21,14 @@
  */
 package trycb.config;
 
+import java.nio.file.Paths;
+
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.Cluster;
+import com.couchbase.client.java.env.ClusterEnvironment;
+import com.couchbase.client.core.env.SecurityConfig;
+import com.couchbase.client.core.env.IoConfig;
+import com.couchbase.client.java.ClusterOptions;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -42,9 +48,36 @@ public class Database {
 
     @Value("${storage.password}")
     private String password;
+    
+    @Value("${storage.dnssrv}")
+    private Boolean dnssrv;
+    
+    @Value("${storage.cert}")
+    private String cert; // blank means no cert
 
     public @Bean Cluster loginCluster() {
-        return Cluster.connect(host, username, password);
+        
+        ClusterEnvironment.Builder envBuilder
+            = ClusterEnvironment.builder();
+            
+        if (dnssrv) {
+            envBuilder.ioConfig(IoConfig.enableDnsSrv(true));
+        }
+        
+        if (cert != "") {
+            envBuilder.securityConfig(SecurityConfig
+                .enableTls(true)
+                .trustCertificate(Paths.get(cert)));
+            }
+        }
+            
+        ClusterEnvironment env = envBuilder.build();
+
+        return Cluster.connect(
+            host,
+            ClusterOptions
+                .clusterOptions(username, password)
+                .environment(env));
     }
 
     public @Bean Bucket loginBucket() {

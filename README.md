@@ -152,8 +152,16 @@ With a running Couchbase Server, you can pass the database details in:
 
     CB_HOST=10.144.211.101 CB_USER=Administrator CB_PSWD=password docker-compose -f mix-and-match.yml up backend frontend
 
+<!--
+If you are connecting to a cloud hosted database, such as Couchbase Capella, you may need to use DNS SRV connection, and provide a path to a TLS certificate.
+
+    CB_HOST=cb.abcdefghijklmnop.cloud.couchbase.com CB_USER=Administrator CB_PSWD=password CB_DNSSRV=true CB_CERT=./capella.cert docker-compose -f mix-and-match.yml up backend frontend
+-->
+
 The Docker image will run the same checks as usual, and also create the
 `hotels-index` if it does not already exist.
+
+NOTE: If you are connecting to a cloud hosted database, such as Couchbase Capella, then see below for now (this will be supported via Docker in due course.)
 
 ### Running the Java API application manually
 
@@ -179,11 +187,15 @@ For example, using the Docker image provided:
     export CB_HOST=localhost CB_USER=Administrator CB_PSWD=password
     ./wait-for-couchbase.sh echo "Couchbase is ready!"
     
-    mvn spring-boot:run -Dspring-boot.run.arguments="--storage.host=$CB_HOST storage.username=$CB_USER storage.password=$CB_PSWD"
+    mvn spring-boot:run -Dspring-boot.run.arguments="--storage.host=$CB_HOST --storage.username=$CB_USER --storage.password=$CB_PSWD"
 
 If you already have an existing Couchbase server running and correctly configured, you might run:
 
-    mvn spring-boot:run -Dspring-boot.run.arguments="--storage.host=localhost storage.username=Administrator storage.password=password"
+    mvn spring-boot:run -Dspring-boot.run.arguments="--storage.host=localhost --storage.username=Administrator --storage.password=password"
+
+If you are connecting to a cloud hosted database, such as Couchbase Capella, you may need to use DNS SRV connection, and provide a path to a TLS certificate.
+
+    mvn spring-boot:run -Dspring-boot.run.arguments="--storage.host=cb.abcdefghijklmnop.cloud.couchbase.com --storage.username=Administrator --storage.password=password --storage.dnssrv=true --storage.cert=./capella.cert"
 
 Finally, if you want to see how the sample frontend Vue application works with your changes,
 run it with:
